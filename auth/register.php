@@ -265,20 +265,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             accent-color: #9ACD32;
         }
 
-        .btn-primary {
-            width: 100%;
-            padding: 0.85rem;
-            background: linear-gradient(135deg, #9ACD32, #7CB342);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(154, 205, 50, 0.25);
-            margin-top: 0.5rem;
-        }
+.btn-primary {
+    display: block; 
+    width: 280px; 
+    margin: 1.5rem auto 0; 
+    padding: 0.85rem;
+    background: linear-gradient(135deg, #9ACD32, #7CB342);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(154, 205, 50, 0.25);
+}
 
         .btn-primary:hover {
             transform: translateY(-2px);
