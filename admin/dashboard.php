@@ -67,8 +67,11 @@ try {
 }
 
 $pageTitle = 'Admin Dashboard';
+// Note: If header.php already has a navbar, you might want to comment it out or remove it to use this new one.
 include '../includes/header.php';
 ?>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
     * {
@@ -98,7 +101,177 @@ include '../includes/header.php';
         background: var(--background);
         color: var(--text-primary);
         line-height: 1.6;
+        /* UPDATED: Add padding top so content isn't hidden behind the new fixed navbar */
+        padding-top: 80px; 
     }
+
+    /* =========================================
+       NEW: TOP NAVIGATION BAR & BURGER MENU
+       ========================================= */
+    .top-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 70px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        z-index: 1000;
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+
+    .nav-brand img {
+        height: 40px;
+        width: auto;
+    }
+
+    .burger-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        padding: 0.5rem;
+        z-index: 1002;
+    }
+
+    .burger-menu span {
+        width: 25px;
+        height: 3px;
+        background: var(--primary-dark);
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .burger-menu.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 6px);
+    }
+
+    .burger-menu.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .burger-menu.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -6px);
+    }
+
+    /* =========================================
+       NEW: SIDE DRAWER (MOBILE MENU)
+       ========================================= */
+    .mobile-nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-nav-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .mobile-nav-menu {
+        position: fixed;
+        top: 0;
+        right: -300px;
+        width: 280px;
+        height: 100%;
+        background: var(--surface);
+        z-index: 1001;
+        padding: 1.5rem;
+        box-shadow: -5px 0 25px rgba(0,0,0,0.1);
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mobile-nav-menu.show {
+        right: 0;
+    }
+
+    .mobile-nav-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .mobile-nav-header h3 {
+        color: var(--primary);
+        font-weight: 800;
+    }
+
+    .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        overflow-y: auto;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.875rem 1rem;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        background: var(--background);
+        color: var(--primary);
+        transform: translateX(5px);
+    }
+
+    .nav-link.active {
+        background: linear-gradient(135deg, var(--primary-light) 0%, rgba(139, 195, 74, 0.2) 100%);
+        color: var(--primary-dark);
+        font-weight: 600;
+    }
+
+    .nav-link i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .nav-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        font-weight: 700;
+        margin: 1.5rem 0 0.5rem 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* =========================================
+       EXISTING DASHBOARD STYLES
+       ========================================= */
 
     .dashboard-container {
         max-width: 1400px;
@@ -131,7 +304,7 @@ include '../includes/header.php';
     }
 
     .dashboard-header h1 {
-        font-size: 2rem;           /* Changed from 1.75rem */
+        font-size: 2rem;           
         font-weight: 800;
         margin-bottom: 0.25rem;
         position: relative;
@@ -139,7 +312,7 @@ include '../includes/header.php';
     }
 
     .dashboard-header p {
-        font-size: 1rem;           /* Changed from 0.95rem */
+        font-size: 1rem;           
         opacity: 0.95;
         position: relative;
         z-index: 1;
@@ -770,14 +943,65 @@ include '../includes/header.php';
     }
 </style>
 
+<nav class="top-navbar">
+    <a href="dashboard.php" class="nav-brand">
+        <img src="../assets/carmona-logo.png" alt="Logo" onerror="this.style.display='none'"> 
+        <span>ADMIN PORTAL</span>
+    </a>
+
+    <button class="burger-menu" id="burgerMenu" onclick="toggleMobileNav()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</nav>
+
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
+<div class="mobile-nav-menu" id="mobileNavMenu">
+    <div class="mobile-nav-header">
+        <h3>Admin Menu</h3>
+        <button onclick="closeMobileNav()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary)">&times;</button>
+    </div>
+
+    <div class="nav-links">
+        <div class="nav-section-title">Main</div>
+        <a href="dashboard.php" class="nav-link active">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="applications.php" class="nav-link">
+            <i class="fas fa-clipboard-list"></i> Applications
+        </a>
+        <a href="users.php" class="nav-link">
+            <i class="fas fa-users"></i> Users
+        </a>
+
+        <div class="nav-section-title">Management</div>
+        <a href="manage_departments.php" class="nav-link">
+            <i class="fas fa-building"></i> Depts & Services
+        </a>
+        <a href="reports.php" class="nav-link">
+            <i class="fas fa-chart-line"></i> Reports
+        </a>
+        <a href="activity_logs.php" class="nav-link">
+            <i class="fas fa-history"></i> Activity Logs
+        </a>
+        <a href="check_email_and_sms_logs.php" class="nav-link">
+            <i class="fas fa-envelope"></i> Email/SMS Logs
+        </a>
+
+        <div class="nav-section-title">Account</div>
+        <a href="../auth/logout.php" class="nav-link" style="color: #ef4444;">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>
+
 <div class="dashboard-container">
-    <!-- Header -->
     <div class="dashboard-header animate__animated animate__fadeInDown">
         <h1>Welcome Back, Admin!</h1>
         <p>Here's what's happening with your permit tracking system today</p>
     </div>
 
-    <!-- Statistics Grid -->
     <div class="stats-grid">
         <div class="stat-card animate__animated animate__fadeInUp" style="animation-delay: 0.1s;" onclick="window.location.href='applications.php'">
             <div class="stat-icon-wrapper">
@@ -876,7 +1100,6 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <!-- Management Tools - Full Width Section -->
     <div class="management-tools-section">
         <div class="card">
             <div class="card-header">
@@ -906,9 +1129,7 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <!-- Content Grid -->
     <div class="content-grid">
-        <!-- Recent Applications -->
         <div class="card">
             <div class="card-header">
                 <h2>
@@ -957,7 +1178,6 @@ include '../includes/header.php';
             <?php endif; ?>
         </div>
 
-        <!-- Status Chart -->
         <div class="card">
             <div class="card-header">
                 <h2>
@@ -971,7 +1191,6 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <!-- Recent Activity -->
     <div class="card">
         <div class="card-header">
             <h2>
@@ -1026,6 +1245,31 @@ include '../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script>
+    // MOBILE NAVIGATION LOGIC (Added)
+    function toggleMobileNav() {
+        const menu = document.getElementById('mobileNavMenu');
+        const overlay = document.getElementById('mobileNavOverlay');
+        const burger = document.getElementById('burgerMenu');
+        
+        menu.classList.toggle('show');
+        overlay.classList.toggle('show');
+        burger.classList.toggle('active');
+        
+        // Prevent body scroll when menu is open
+        document.body.style.overflow = menu.classList.contains('show') ? 'hidden' : '';
+    }
+
+    function closeMobileNav() {
+        const menu = document.getElementById('mobileNavMenu');
+        const overlay = document.getElementById('mobileNavOverlay');
+        const burger = document.getElementById('burgerMenu');
+        
+        menu.classList.remove('show');
+        overlay.classList.remove('show');
+        burger.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
     // Status Chart
     const ctx = document.getElementById('statusChart');
     if (ctx) {
