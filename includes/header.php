@@ -34,7 +34,7 @@ if ($currentUser) {
         <link rel="stylesheet" href="<?php echo BASE_URL . '/assets/css/' . $additionalCSS; ?>">
     <?php endif; ?>
     
-    <!-- Notification Bell Styles -->
+    <!-- Notification Bell & Responsive Styles -->
     <style>
         .notification-bell {
             position: relative;
@@ -124,9 +124,198 @@ if ($currentUser) {
             text-align: center;
             color: #999;
         }
+
+        /* Mobile Responsive Styles */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1002;
+        }
+
+        .mobile-menu-toggle svg {
+            width: 28px;
+            height: 28px;
+            stroke: #6b7280;
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-overlay.active {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .navbar {
+                padding: 1rem 1.5rem !important;
+            }
+
+            .navbar-brand .brand-text {
+                font-size: 1.1rem !important;
+            }
+
+            .navbar-brand img {
+                width: 40px !important;
+                height: 40px !important;
+            }
+
+            .nav-links-center {
+                gap: 2rem !important;
+            }
+
+            .nav-link-icon {
+                font-size: 0.85rem !important;
+            }
+
+            .nav-link-icon svg {
+                width: 24px !important;
+                height: 24px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .mobile-overlay.active {
+                display: block;
+            }
+
+            .navbar {
+                padding: 0.75rem 1rem !important;
+            }
+
+            .navbar-brand {
+                gap: 0.5rem !important;
+            }
+
+            .navbar-brand .brand-text {
+                font-size: 0.95rem !important;
+            }
+
+            .navbar-brand img {
+                width: 35px !important;
+                height: 35px !important;
+            }
+
+            .nav-links-center {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 280px;
+                height: 100vh;
+                background: white;
+                flex-direction: column;
+                align-items: flex-start !important;
+                padding: 5rem 1.5rem 2rem;
+                gap: 0 !important;
+                box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+                transition: right 0.3s ease;
+                z-index: 1001;
+                overflow-y: auto;
+            }
+
+            .nav-links-center.active {
+                right: 0;
+            }
+
+            .nav-links-center a {
+                width: 100%;
+                padding: 1rem !important;
+                flex-direction: row !important;
+                justify-content: flex-start !important;
+                gap: 1rem !important;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .nav-links-center a svg {
+                width: 24px !important;
+                height: 24px !important;
+            }
+
+            .nav-links-center a span {
+                font-size: 1rem !important;
+            }
+
+            .notification-bell {
+                margin: 0 0.5rem;
+            }
+
+            .notification-bell-icon {
+                width: 24px;
+                height: 24px;
+            }
+
+            .notification-dropdown {
+                width: 300px;
+                right: -20px;
+            }
+
+            .nav-dropdown-toggle {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            .nav-dropdown-toggle svg {
+                width: 20px !important;
+                height: 20px !important;
+            }
+
+            .nav-dropdown-toggle span {
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .nav-right-section {
+                gap: 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-brand .brand-text {
+                font-size: 0.85rem !important;
+            }
+
+            .navbar-brand img {
+                width: 30px !important;
+                height: 30px !important;
+            }
+
+            .notification-dropdown {
+                width: calc(100vw - 40px);
+                max-width: 300px;
+            }
+
+            .nav-dropdown-toggle span {
+                max-width: 80px;
+            }
+
+            .notification-bell {
+                margin: 0 0.25rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
     <!-- Navigation Bar -->
     <nav class="navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); position: sticky; top: 0; z-index: 1000;">
         <!-- Left: Logo -->
@@ -136,20 +325,20 @@ if ($currentUser) {
                 <img src="<?php echo BASE_URL; ?>/assets/carmona-logo.png" alt="Logo" style="width: 45px; height: 45px; object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'">
                 <span class="brand-text" style="font-size: 1.25rem; font-weight: 700; color: #7fb539;">Carmona Online Permit Portal</span>
             <?php else: ?>
-    <!-- User/Guest: Clickable logo -->
-    <?php $logoLink = isLoggedIn() ? BASE_URL . '/user/dashboard.php' : BASE_URL . '/index.php'; ?>
-    <a href="<?php echo $logoLink; ?>" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; pointer-events: none;">
-        <img src="<?php echo BASE_URL; ?>/assets/carmona-logo.png" alt="Logo" style="width: 45px; height: 45px; object-fit: contain; flex-shrink: 0; pointer-events: auto; cursor: pointer;" onerror="this.style.display='none'">
-        <span class="brand-text" style="font-size: 1.25rem; font-weight: 700; color: #7fb539; pointer-events: none; cursor: default;">Carmona Online Permit Portal</span>
-    </a>
-<?php endif; ?>
+                <!-- User/Guest: Clickable logo -->
+                <?php $logoLink = isLoggedIn() ? BASE_URL . '/user/dashboard.php' : BASE_URL . '/index.php'; ?>
+                <a href="<?php echo $logoLink; ?>" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; pointer-events: none;">
+                    <img src="<?php echo BASE_URL; ?>/assets/carmona-logo.png" alt="Logo" style="width: 45px; height: 45px; object-fit: contain; flex-shrink: 0; pointer-events: auto; cursor: pointer;" onerror="this.style.display='none'">
+                    <span class="brand-text" style="font-size: 1.25rem; font-weight: 700; color: #7fb539; pointer-events: none; cursor: default;">Carmona Online Permit Portal</span>
+                </a>
+            <?php endif; ?>
         </div>
 
         <!-- Center: Navigation Links with Icons -->
-        <div style="display: flex; align-items: center; gap: 3.5rem;">
+        <div class="nav-links-center" id="navLinksCenter" style="display: flex; align-items: center; gap: 3.5rem;">
             <?php if (isLoggedIn()): ?>
                 <?php if (isAdmin()): ?>
-                    <!-- Admin Navigation - 4 Main Items -->
+                    <!-- Admin Navigation -->
                     <a href="<?php echo BASE_URL; ?>/admin/dashboard.php" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; text-decoration: none; color: #6b7280; font-weight: 500; font-size: 0.9rem; transition: all 0.3s ease;" class="nav-link-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 28px; height: 28px; stroke: #6b7280;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -210,8 +399,8 @@ if ($currentUser) {
             <?php endif; ?>
         </div>
 
-        <!-- Right: Notification Bell + Login or User Dropdown -->
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <!-- Right: Mobile Toggle + Notification Bell + Login or User Dropdown -->
+        <div class="nav-right-section" style="display: flex; align-items: center; gap: 1rem;">
             <?php if (isLoggedIn()): ?>
                 <!-- Notification Bell -->
                 <div class="notification-bell" onclick="toggleNotifications()">
@@ -259,15 +448,50 @@ if ($currentUser) {
                         </a>
                     </div>
                 </div>
+
+                <!-- Mobile Menu Toggle (for logged in users) -->
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
             <?php else: ?>
                 <a href="<?php echo BASE_URL; ?>/auth/login.php" class="btn" style="padding: 0.65rem 2rem; border-radius: 50px; text-decoration: none; color: #7fb539; font-weight: 600; border: 2px solid #7fb539; transition: all 0.3s ease; background: transparent;">Login</a>
+                
+                <!-- Mobile Menu Toggle (for guests) -->
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
             <?php endif; ?>
         </div>
     </nav>
 
-    <!-- Notification JavaScript -->
     <script>
     let notificationDropdownOpen = false;
+
+    // Mobile menu functions
+    function toggleMobileMenu() {
+        const navLinks = document.getElementById('navLinksCenter');
+        const overlay = document.getElementById('mobileOverlay');
+        navLinks.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+    function closeMobileMenu() {
+        const navLinks = document.getElementById('navLinksCenter');
+        const overlay = document.getElementById('mobileOverlay');
+        navLinks.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+
+    // Close mobile menu when clicking a link
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.nav-links-center a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+    });
 
     function toggleNotifications() {
         const dropdown = document.getElementById('notificationDropdown');
@@ -371,6 +595,7 @@ if ($currentUser) {
         return div.innerHTML;
     }
 
+    // Close notification dropdown when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.notification-bell')) {
             const dropdown = document.getElementById('notificationDropdown');
@@ -381,6 +606,7 @@ if ($currentUser) {
         }
     });
 
+    // Poll for new notifications every 30 seconds
     setInterval(() => {
         if (!notificationDropdownOpen) {
             fetch('<?php echo BASE_URL; ?>/api/get_notifications.php?limit=1')
@@ -390,71 +616,73 @@ if ($currentUser) {
         }
     }, 30000);
 
-    // Dropdown hover
-    document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
-        dropdown.addEventListener('mouseenter', function() {
-            const menu = this.querySelector('.nav-dropdown-menu');
-            if (menu) {
-                menu.style.opacity = '1';
-                menu.style.visibility = 'visible';
-                menu.style.transform = 'translateY(0)';
-            }
+    // Dropdown hover effects
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+            dropdown.addEventListener('mouseenter', function() {
+                const menu = this.querySelector('.nav-dropdown-menu');
+                if (menu) {
+                    menu.style.opacity = '1';
+                    menu.style.visibility = 'visible';
+                    menu.style.transform = 'translateY(0)';
+                }
+            });
+            dropdown.addEventListener('mouseleave', function() {
+                const menu = this.querySelector('.nav-dropdown-menu');
+                if (menu) {
+                    menu.style.opacity = '0';
+                    menu.style.visibility = 'hidden';
+                    menu.style.transform = 'translateY(-10px)';
+                }
+            });
         });
-        dropdown.addEventListener('mouseleave', function() {
-            const menu = this.querySelector('.nav-dropdown-menu');
-            if (menu) {
-                menu.style.opacity = '0';
-                menu.style.visibility = 'hidden';
-                menu.style.transform = 'translateY(-10px)';
-            }
-        });
-    });
 
-    // Nav link hover effects
-    document.querySelectorAll('.nav-link-simple').forEach(link => {
-        link.addEventListener('mouseenter', function() { this.style.color = '#7fb539'; });
-        link.addEventListener('mouseleave', function() { this.style.color = '#333'; });
-    });
+        // Nav link hover effects
+        document.querySelectorAll('.nav-link-simple').forEach(link => {
+            link.addEventListener('mouseenter', function() { this.style.color = '#7fb539'; });
+            link.addEventListener('mouseleave', function() { this.style.color = '#333'; });
+        });
 
-    document.querySelectorAll('.nav-link-icon').forEach(link => {
-        link.addEventListener('mouseenter', function() {
-            this.style.color = '#7fb539';
-            const svg = this.querySelector('svg');
-            if (svg) svg.style.stroke = '#7fb539';
+        document.querySelectorAll('.nav-link-icon').forEach(link => {
+            link.addEventListener('mouseenter', function() {
+                this.style.color = '#7fb539';
+                const svg = this.querySelector('svg');
+                if (svg) svg.style.stroke = '#7fb539';
+            });
+            link.addEventListener('mouseleave', function() {
+                this.style.color = '#6b7280';
+                const svg = this.querySelector('svg');
+                if (svg) svg.style.stroke = '#6b7280';
+            });
         });
-        link.addEventListener('mouseleave', function() {
-            this.style.color = '#6b7280';
-            const svg = this.querySelector('svg');
-            if (svg) svg.style.stroke = '#6b7280';
-        });
-    });
 
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.addEventListener('mouseenter', function() {
-            this.style.background = 'rgba(154, 205, 50, 0.15)';
-            this.style.color = '#7CB342';
-            this.style.transform = 'translateX(3px)';
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(154, 205, 50, 0.15)';
+                this.style.color = '#7CB342';
+                this.style.transform = 'translateX(3px)';
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.background = 'transparent';
+                this.style.color = '#546E7A';
+                this.style.transform = 'translateX(0)';
+            });
         });
-        item.addEventListener('mouseleave', function() {
-            this.style.background = 'transparent';
-            this.style.color = '#546E7A';
-            this.style.transform = 'translateX(0)';
-        });
-    });
 
-    document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
-        btn.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-            this.style.boxShadow = '0 12px 40px rgba(154, 205, 50, 0.5)';
-        });
-        btn.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 8px 32px rgba(154, 205, 50, 0.3)';
+        document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 12px 40px rgba(154, 205, 50, 0.5)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 8px 32px rgba(154, 205, 50, 0.3)';
+            });
         });
     });
     </script>
 
-    <!-- Main Content -->
+<!-- Main Content -->
     <main class="main-content">
         <?php 
         if (isset($_SESSION['logout_success'])) {
@@ -464,5 +692,4 @@ if ($currentUser) {
             }
             unset($_SESSION['logout_success']);
         }
-        
         ?>
