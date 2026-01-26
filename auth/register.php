@@ -20,26 +20,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirmPassword = $_POST['confirm_password'] ?? '';
     
     // Validation
-    if (empty($name)) {
-        $errors[] = 'Name is required.';
-    }
-    
+    if (empty($name)) $errors[] = 'Name is required.';
     if (empty($email)) {
         $errors[] = 'Email is required.';
     } elseif (!isValidEmail($email)) {
         $errors[] = 'Please enter a valid email address.';
     }
-    
     if (empty($mobile)) {
         $errors[] = 'Mobile number is required.';
     } elseif (!preg_match('/^09[0-9]{9}$/', $mobile)) {
         $errors[] = 'Please enter a valid Philippine mobile number (09xxxxxxxxx).';
     }
-    
-    if (empty($address)) {
-        $errors[] = 'Address is required.';
-    }
-    
+    if (empty($address)) $errors[] = 'Address is required.';
     if (empty($password)) {
         $errors[] = 'Password is required.';
     } elseif (strlen($password) < 8) {
@@ -52,37 +44,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
-        
-        if ($stmt->rowCount() > 0) {
-            $errors[] = 'Email address is already registered.';
-        }
+        if ($stmt->rowCount() > 0) $errors[] = 'Email address is already registered.';
     }
     
     // Check if mobile already exists
     if (empty($errors)) {
         $stmt = $pdo->prepare("SELECT id FROM users WHERE mobile = ?");
         $stmt->execute([$mobile]);
-        
-        if ($stmt->rowCount() > 0) {
-            $errors[] = 'Mobile number is already registered.';
-        }
+        if ($stmt->rowCount() > 0) $errors[] = 'Mobile number is already registered.';
     }
-
     
     // Register user if no errors
     if (empty($errors)) {
         $hashedPassword = hashPassword($password);
-        
         $stmt = $pdo->prepare("INSERT INTO users (name, email, password, mobile, address, role) VALUES (?, ?, ?, ?, ?, 'user')");
         
         if ($stmt->execute([$name, $email, $hashedPassword, $mobile, $address])) {
             $success = 'Registration successful! You can now login.';
             logActivity($pdo->lastInsertId(), 'Registration', 'New user registered');
-            
-            // Clear form data
             $_POST = [];
-            
-            // Redirect after 2 seconds
             header("refresh:2;url=login.php");
         } else {
             $errors[] = 'Registration failed. Please try again.';
@@ -97,162 +77,341 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - <?php echo SITE_NAME; ?></title>
     
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/favicon.png">
     
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
     <style>
-        
-        body.auth-page {
-            padding: 0.5rem 0 !important;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .auth-container,
-        .login-container {
-            min-height: auto !important;
-            padding: 0.5rem !important;
-            max-width: 100% !important;
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
-        .auth-card,
-        .login-card {
-            max-width: 1400px !important;
-            width: 95% !important;
-            margin: 0 auto !important;
-            padding: 1.5rem 5rem !important;
-            border-radius: 24px !important;
+        body {
+            background: linear-gradient(135deg, #f8fef5 0%, #ffffff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
 
-        /* Logo */
+        .auth-container {
+            width: 100%;
+            max-width: 900px;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .auth-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .auth-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .auth-container::-webkit-scrollbar-thumb {
+            background: #9ACD32;
+            border-radius: 3px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.75rem 2rem;
+            box-shadow: 0 10px 50px rgba(154, 205, 50, 0.15);
+            border: 1px solid rgba(154, 205, 50, 0.1);
+        }
+
         .auth-header {
-            margin-bottom: 1.5rem !important;
-            text-align: center !important;
-            display: block !important;
+            text-align: center;
+            margin-bottom: 1.5rem;
         }
 
         .auth-logo {
-    width: 130px !important;
-    height: 130px !important;
-    margin: 0 auto -10px !important;
-    float: none !important;
-    display: block !important;
-    object-fit: contain !important;
-}
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 0.75rem;
+            display: block;
+            object-fit: contain;
+        }
 
         .auth-header h1 {
-            font-size: 2rem !important;
-            margin-bottom: 0.25rem !important;
-            margin-top: 0 !important;
-            text-align: center !important;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
         }
 
         .auth-header p {
-            font-size: 0.95rem !important;
-            margin-bottom: 0 !important;
-            text-align: center !important;
-            clear: none !important;
+            color: #6b7280;
+            font-size: 0.9rem;
         }
 
-        /* Form Layout -  */
-        .form-row {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 3rem !important;
-            margin-bottom: 1rem !important;
-        }
-
-        .auth-form .form-group,
-        .form-group {
-            margin-bottom: 1rem !important;
-        }
-
-        .form-row .form-group {
-            margin-bottom: 0 !important;
-        }
-
-        /* Labels -  */
-        .auth-form label,
-        .form-group label {
-            margin-bottom: 0.4rem !important;
-            font-size: 0.85rem !important;
-        }
-
-        /* Inputs -  */
-        .auth-form .form-control,
-        .form-control,
-        input[type="text"],
-        input[type="email"],
-        input[type="password"],
-        input[type="tel"] {
-            padding: 0.7rem 1rem !important;
-            font-size: 0.9rem !important;
-            border-radius: 12px !important;
-        }
-
-        .form-help {
-            margin-top: 0.3rem !important;
-            font-size: 0.75rem !important;
-        }
-
-        /* Checkbox */
-        .checkbox-label {
-            font-size: 0.85rem !important;
-            margin-top: 0.5rem !important;
-        }
-
-        .checkbox-label input[type="checkbox"] {
-            width: 16px !important;
-            height: 16px !important;
-        }
-
-        /* Button */
-        .btn-primary,
-        button[type="submit"],
-        .btn-submit {
-            padding: 0.75rem !important;
-            font-size: 0.95rem !important;
-            margin-top: 0.5rem !important;
-            border-radius: 12px !important;
-        }
-
-        /* Footer */
-        .auth-footer {
-            margin-top: 1.25rem !important;
-            padding-top: 1.25rem !important;
-        }
-
-        .auth-footer p {
-            font-size: 0.85rem !important;
-            margin-bottom: 0.4rem !important;
-        }
-
-        /* Alert */
         .alert {
-            padding: 0.75rem 1rem !important;
-            margin-bottom: 1rem !important;
-            font-size: 0.85rem !important;
+            padding: 0.75rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
         }
 
         .alert-icon {
-            width: 18px !important;
-            height: 18px !important;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
         }
 
-        /* Mobile */
+        .error-list {
+            margin: 0;
+            padding-left: 1.25rem;
+            list-style: disc;
+        }
+
+        .error-list li {
+            margin-bottom: 0.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .required {
+            color: #ef4444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            font-size: 0.9rem;
+            background: #f9fcf7;
+            border: 2px solid #e5f0db;
+            border-radius: 10px;
+            color: #1f2937;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #9ACD32;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(154, 205, 50, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #9ca3af;
+        }
+
+        .form-help {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #4b5563;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #9ACD32;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, #9ACD32, #7CB342);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(154, 205, 50, 0.25);
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(154, 205, 50, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .auth-footer p {
+            color: #6b7280;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .text-link, .text-link-bold {
+            color: #9ACD32;
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s ease;
+        }
+
+        .text-link:hover, .text-link-bold:hover {
+            color: #7BA428;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .auth-card,
-            .login-card {
-                padding: 1.5rem !important;
+            .auth-container {
+                max-width: 500px;
+            }
+
+            .auth-card {
+                padding: 1.5rem;
             }
 
             .form-row {
-                grid-template-columns: 1fr !important;
-                gap: 1rem !important;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .form-row .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .form-row .form-group:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .auth-logo {
+                width: 55px;
+                height: 55px;
+                margin-bottom: 0.5rem;
+            }
+
+            .auth-header h1 {
+                font-size: 1.3rem;
+            }
+
+            .auth-header {
+                margin-bottom: 1rem;
+            }
+
+            .form-group, .form-row {
+                margin-bottom: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .auth-card {
+                padding: 1.25rem;
+            }
+        }
+
+        /* Landscape phone */
+        @media (max-height: 500px) {
+            .auth-container {
+                max-height: calc(100vh - 1rem);
+            }
+
+            .auth-card {
+                padding: 1rem;
+            }
+
+            .auth-logo {
+                width: 45px;
+                height: 45px;
+                margin-bottom: 0.4rem;
+            }
+
+            .auth-header {
+                margin-bottom: 0.75rem;
+            }
+
+            .auth-header h1 {
+                font-size: 1.15rem;
+                margin-bottom: 0.15rem;
+            }
+
+            .auth-header p {
+                font-size: 0.8rem;
+            }
+
+            .form-group, .form-row {
+                margin-bottom: 0.7rem;
+            }
+
+            .form-control {
+                padding: 0.6rem 0.8rem;
+            }
+
+            .auth-footer {
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
             }
         }
     </style>
 </head>
-<body class="auth-page">
+<body>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
@@ -279,7 +438,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <?php echo $success; ?>
+                    <div><?php echo $success; ?></div>
                 </div>
             <?php endif; ?>
 
@@ -305,7 +464,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             id="email" 
                             name="email" 
                             class="form-control"
-                            placeholder="juan.delacruz@example.com"
+                            placeholder="juan@example.com"
                             value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                             required
                         >
@@ -378,7 +537,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block">
+                <button type="submit" class="btn-primary">
                     Create Account
                 </button>
             </form>
@@ -390,7 +549,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <script src="<?php echo BASE_URL; ?>/assets/js/main.js"></script>
     <script>
         // Password match validation
         document.getElementById('registerForm').addEventListener('submit', function(e) {
@@ -400,6 +558,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (password !== confirmPassword) {
                 e.preventDefault();
                 alert('Passwords do not match!');
+                document.getElementById('confirm_password').focus();
                 return false;
             }
         });
