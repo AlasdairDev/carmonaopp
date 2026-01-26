@@ -17,6 +17,7 @@ session_start();
 // Set a specific logout flag instead of generic success message
 $_SESSION['logout_success'] = true;
 
-// Redirect to login page using the redirect function
-redirect('auth/login.php');
+// Redirect to login page
+header('Location: ' . BASE_URL . '/auth/login.php');
+exit();
 ?>
