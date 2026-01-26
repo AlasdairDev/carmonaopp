@@ -874,7 +874,945 @@ include '../includes/header.php';
                 height: 80px;
             }
         }
+        /* Tablet Landscape & Smaller Desktops (1024px - 1200px) */
+@media (max-width: 1200px) {
+    /* Stats Grid - Works on dashboard, reports, users, etc. */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem;
+    }
+    
+    /* Quick Actions - Works on dashboard */
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Content Grid - Works on dashboard, profile */
+    .content-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Grid-2 - Works on view_application */
+    .grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Charts Grid - Works on reports */
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Management Tools - Works on dashboard */
+    .management-tools-section .quick-actions {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Container - Works on ALL pages */
+    .container,
+    .dashboard-container {
+        padding: 0 1rem 1rem 1rem;
+    }
+}
+
+/* Tablet Portrait (768px - 1024px) */
+@media (max-width: 1024px) {
+    /* Header - Works on ALL pages */
+    .page-header,
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+    
+    .page-header h1,
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    /* Stats Grid - ALL pages with stats */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Filters Grid - applications, users, activity_logs, notifications */
+    .filters-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Info Grid - view_application, profile */
+    .info-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Payment Info Grid - verify_payments */
+    .payment-info-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Payment Row - verify_payments */
+    .payment-row {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem;
+    }
+    
+    /* Proof Actions - verify_payments */
+    .proof-actions-section {
+        justify-content: space-between;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .action-btns-compact {
+        flex-direction: row !important;
+    }
+    
+    /* Table - ALL pages with tables */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+        padding: 0.75rem;
+        font-size: 0.8125rem;
+    }
+    
+    /* Action Buttons - applications, users */
+    .action-buttons,
+    .action-btns {
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+}
+
+/* Mobile & Small Tablets (480px - 768px) */
+@media (max-width: 768px) {
+    /* ========================================
+       GLOBAL ELEMENTS (All Pages)
+       ======================================== */
+    
+    .container,
+    .dashboard-container {
+        padding: 0 0.75rem 0.75rem 0.75rem;
+    }
+    
+    /* Page Header - ALL PAGES */
+    .page-header,
+    .dashboard-header {
+        padding: 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .page-header h1,
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-header p {
+        font-size: 0.875rem;
+    }
+    
+    /* Header Content - ALL PAGES */
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        width: 100%;
+    }
+    
+    .header-left,
+    .header-right {
+        width: 100%;
+    }
+    
+    .header-right {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    /* Header Actions - ALL PAGES */
+    .header-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* ========================================
+       STATS COMPONENTS
+       (dashboard, users, reports, notifications, etc.)
+       ======================================== */
+    
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    /* ========================================
+       MANAGEMENT TOOLS & QUICK ACTIONS
+       (dashboard)
+       ======================================== */
+    
+    .quick-actions,
+    .management-tools-section .quick-actions {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        padding: 1.5rem 1rem;
+    }
+    
+    .action-btn .icon-logo {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .action-btn span {
+        font-size: 0.875rem;
+    }
+    
+    /* ========================================
+       FILTERS SECTION
+       (applications, users, activity_logs, notifications, reports)
+       ======================================== */
+    
+    .filters-section {
+        padding: 1rem;
+    }
+    
+    .filters-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+    
+    .filter-group .btn {
+        height: 44px;
+    }
+    
+    .filter-actions {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Search Container - applications, users, manage_departments */
+    .search-container {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .search-box {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Top Controls - applications, users, manage_departments */
+    .top-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    /* ========================================
+       FORM CONTROLS
+       (ALL pages with forms)
+       ======================================== */
+    
+    .form-control {
+        height: 44px;
+        padding: 0.625rem;
+        font-size: 0.875rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        font-size: 0.8125rem;
+    }
+    
+    /* ========================================
+       BUTTONS
+       (ALL pages)
+       ======================================== */
+    
+    .btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .add-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* ========================================
+       RESULTS INFO
+       (applications, users, activity_logs)
+       ======================================== */
+    
+    .results-info {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+        padding: 0.75rem 1rem;
+    }
+    
+    /* ========================================
+       TABLES
+       (ALL pages with tables)
+       ======================================== */
+    
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modern-table {
+        min-width: 800px;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+        padding: 0.625rem;
+        font-size: 0.75rem;
+    }
+    
+    .data-table {
+        overflow-x: auto;
+    }
+    
+    /* ========================================
+       TABS
+       (manage_departments)
+       ======================================== */
+    
+    .tabs-container {
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+    
+    .tab-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    /* ========================================
+       INFO DISPLAYS
+       (view_application, profile)
+       ======================================== */
+    
+    .info-display,
+    .info-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .info-item {
+        padding: 0.75rem;
+    }
+    
+    .info-label {
+        font-size: 0.625rem;
+    }
+    
+    .info-value {
+        font-size: 0.875rem;
+    }
+    
+    /* ========================================
+       PAYMENT COMPONENTS
+       (verify_payments, view_application)
+       ======================================== */
+    
+    .payment-info-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .payment-proof {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .proof-preview {
+        width: 100%;
+        height: 250px;
+    }
+    
+    .proof-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .proof-buttons .btn {
+        width: 100%;
+    }
+    
+    .proof-thumb {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .info-item-compact {
+        padding: 0.75rem;
+    }
+    
+    .info-label-compact {
+        font-size: 0.625rem;
+    }
+    
+    .info-value-compact {
+        font-size: 0.875rem;
+    }
+    
+    /* ========================================
+       ACTION BUTTONS
+       (applications, users, verify_payments)
+       ======================================== */
+    
+    .action-buttons {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+    }
+    
+    /* ========================================
+       STATUS & BADGES
+       (ALL pages)
+       ======================================== */
+    
+    .status-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .status-badge,
+    .role-badge {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.625rem;
+    }
+    
+    /* ========================================
+       USER COMPONENTS
+       (users, applications, verify_payments)
+       ======================================== */
+    
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .user-info {
+        gap: 0.5rem;
+    }
+    
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.875rem;
+    }
+    
+    .applicant-section {
+        gap: 0.625rem;
+    }
+    
+    .applicant-avatar-sm {
+        width: 44px;
+        height: 44px;
+        font-size: 1.125rem;
+    }
+    
+    .applicant-details-sm h4 {
+        font-size: 0.9375rem;
+    }
+    
+    .meta-row {
+        flex-direction: column;
+        gap: 0.375rem;
+        align-items: flex-start;
+        font-size: 0.75rem;
+    }
+    
+    /* ========================================
+       DOCUMENTS
+       (view_application)
+       ======================================== */
+    
+    .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .doc-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .doc-actions .btn {
+        width: 100%;
+    }
+    
+    /* ========================================
+       ACTIVITY & TIMELINE
+       (dashboard, profile, view_application)
+       ======================================== */
+    
+    .activity-item {
+        padding-left: 2rem;
+    }
+    
+    .activity-icon {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.75rem;
+    }
+    
+    .activity-content {
+        padding: 0.75rem;
+    }
+    
+    .timeline-item {
+        padding-left: 1.5rem;
+    }
+    
+    .timeline-content {
+        padding: 0.75rem;
+    }
+    
+    .timeline-date,
+    .timeline-user {
+        font-size: 0.75rem;
+    }
+    
+    /* ========================================
+       PAGINATION
+       (ALL pages with pagination)
+       ======================================== */
+    
+    .pagination {
+        flex-wrap: wrap;
+        gap: 0.375rem;
+    }
+    
+    .page-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        min-width: 36px;
+    }
+    
+    /* ========================================
+       MODALS
+       (ALL pages with modals)
+       ======================================== */
+    
+    .modal {
+        padding: 0.5rem;
+    }
+    
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: 95vh;
+        padding: 1rem;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.125rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 0.75rem 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+    
+    .modal-actions {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem;
+    }
+    
+    .modal-actions .btn {
+        width: 100%;
+        height: 44px !important;
+    }
+    
+    .close-modal {
+        width: 36px;
+        height: 36px;
+    }
+    
+    /* ========================================
+       NOTIFICATIONS & ALERTS
+       (ALL pages)
+       ======================================== */
+    
+    .toast-notification {
+        top: 70px;
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .alert {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Notification Item - notifications page */
+    .notification-item {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notification-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-start;
+    }
+    
+    .notification-actions {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 0.75rem;
+    }
+    
+    /* ========================================
+       CHARTS
+       (reports, dashboard)
+       ======================================== */
+    
+    .chart-wrapper {
+        height: 250px;
+    }
+    
+    .chart-card {
+        padding: 1rem;
+    }
+    
+    /* ========================================
+       SPECIAL COMPONENTS
+       ======================================== */
+    
+    /* Notes Row - verify_payments */
+    .notes-row {
+        padding: 0.75rem 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    /* Empty State - ALL pages */
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.25rem;
+    }
+    
+    /* Payment Card - verify_payments */
+    .payment-card-compact {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Small Mobile (320px - 480px) */
+@media (max-width: 480px) {
+    .container,
+    .dashboard-container {
+        padding: 0 0.5rem 0.5rem 0.5rem;
+    }
+    
+    .page-header,
+    .dashboard-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .page-header h1,
+    .dashboard-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .page-header p {
+        font-size: 0.8125rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+    }
+    
+    .stat-card h3 {
+        font-size: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    .btn-icon {
+        font-size: 0.75rem;
+        padding: 0.375rem;
+    }
+    
+    .action-btn {
+        padding: 1.25rem 0.875rem;
+    }
+    
+    .action-btn .icon-logo {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .action-btn span {
+        font-size: 0.8125rem;
+    }
+    
+    .filters-section {
+        padding: 0.75rem;
+    }
+    
+    .filters-header h3 {
+        font-size: 0.875rem;
+    }
+    
+    .form-control {
+        padding: 0.5rem;
+        font-size: 0.8125rem;
+        height: 40px;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+        padding: 0.5rem;
+        font-size: 0.6875rem;
+    }
+    
+    .modal-content {
+        padding: 0.75rem;
+    }
+    
+    .modal-header {
+        padding: 0.75rem;
+    }
+    
+    .modal-header h3 {
+        font-size: 1rem;
+    }
+    
+    .modal-body {
+        padding: 0.75rem;
+    }
+    
+    .modal-footer {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .modal-footer .btn,
+    .modal-actions .btn {
+        height: 40px !important;
+        font-size: 0.8125rem;
+    }
+    
+    .close-modal {
+        width: 32px;
+        height: 32px;
+        font-size: 1.5rem;
+    }
+    
+    .toast-notification {
+        top: 60px;
+        left: 5px;
+        right: 5px;
+        padding: 0.75rem 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    .applicant-details-sm h4 {
+        font-size: 0.875rem;
+    }
+    
+    .timeline-item {
+        padding-left: 1.25rem;
+        padding-bottom: 1rem;
+    }
+    
+    .timeline-icon {
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.625rem;
+    }
+    
+    .timeline-content {
+        padding: 0.625rem;
+    }
+    
+    .chart-wrapper {
+        height: 200px;
+    }
+}
+
+/* Landscape Orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+    .page-header {
+        padding: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .modal-content {
+        max-height: 85vh;
+    }
+}
+
+/* Print Styles - ALL PAGES */
+@media print {
+    .header-actions,
+    .status-action,
+    .btn,
+    .btn-icon,
+    .action-buttons,
+    .action-btns,
+    .action-btns-compact,
+    .filters-section,
+    .search-container,
+    .pagination,
+    .modal {
+        display: none !important;
+    }
+    
+    .container,
+    .dashboard-container {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    .page-header {
+        background: white !important;
+        color: black !important;
+        border: 2px solid #000;
+    }
+    
+    .card,
+    .table-card,
+    .stat-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+
+/* Touch Devices - ALL PAGES */
+@media (hover: none) and (pointer: coarse) {
+    .btn,
+    .page-btn,
+    .btn-icon {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .action-buttons,
+    .action-btns,
+    .header-actions {
+        gap: 0.75rem;
+    }
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Fix long content overflow - ALL PAGES */
+@media (max-width: 768px) {
+    .tracking-number {
+        word-break: break-all;
+        font-size: 0.8125rem;
+    }
+    
+    .card {
+        overflow: hidden;
+    }
+    
+    .card * {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .user-details,
+    .applicant-details-sm,
+    .notification-meta {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .table-container::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-container::-webkit-scrollbar-track {
+        background: var(--background);
+    }
+    
+    .table-container::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+    }
+    
+    iframe {
+        max-width: 100%;
+    }
+}
     </style>
+    
 </head>
 <body>
     <div class="container">
