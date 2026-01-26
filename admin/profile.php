@@ -19,150 +19,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $mobile = sanitizeInput($_POST['mobile']);
         $address = sanitizeInput($_POST['address']);
         
-        // Validate inputs
-        if (empty($name) || empty($email)) {
-            throw new Exception('Name and email are required fields.');
-        }
-        
-        // Validate email format
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new Exception('Invalid email format.');
-        }
-        
         // Check if email is already taken by another user
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
         $stmt->execute([$email, $user_id]);
         
         if ($stmt->rowCount() > 0) {
-            throw new Exception('Email address is already in use by another account.');
-        }
-        
-        // Update user profile
-        $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, mobile = ?, address = ?, updated_at = NOW() WHERE id = ?");
-        
-        if ($stmt->execute([$name, $email, $mobile, $address, $user_id])) {
-            // Update session
+            $error_message = 'Email address is already in use by another account.';
+        } else {
+            $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, mobile = ?, address = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$name, $email, $mobile, $address, $user_id]);
+            
             $_SESSION['user_name'] = $name;
+            $_SESSION['user_email'] = $email;
             
             $success_message = 'Profile updated successfully!';
             logActivity($user_id, 'Update Profile', 'Updated profile information');
-            
-            // Redirect to prevent form resubmission
-            header('Location: profile.php?updated=1');
-            exit;
-        } else {
-            throw new Exception('Failed to update profile. Please try again.');
         }
     } catch (Exception $e) {
-        $error_message = $e->getMessage();
-        error_log("Profile update error for user $user_id: " . $e->getMessage());
+        $error_message = 'Error updating profile: ' . $e->getMessage();
     }
 }
 
 // Handle password change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     try {
-        $current_password = $_POST['current_password'] ?? '';
-        $new_password = $_POST['new_password'] ?? '';
-        $confirm_password = $_POST['confirm_password'] ?? '';
-        
-        // Validate inputs
-        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
-            throw new Exception('All password fields are required.');
-        }
+        $current_password = $_POST['current_password'];
+        $new_password = $_POST['new_password'];
+        $confirm_password = $_POST['confirm_password'];
         
         // Get current password hash
         $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
         $stmt->execute([$user_id]);
-        $user_data = $stmt->fetch();
+        $user = $stmt->fetch();
         
-        if (!$user_data) {
-            throw new Exception('User not found.');
-        }
-        
-        // Verify current password
-        if (!password_verify($current_password, $user_data['password'])) {
-            throw new Exception('Current password is incorrect.');
-        }
-        
-        // Check if new passwords match
-        if ($new_password !== $confirm_password) {
-            throw new Exception('New passwords do not match.');
-        }
-        
-        // Check password length
-        if (strlen($new_password) < 8) {
-            throw new Exception('New password must be at least 8 characters long.');
-        }
-        
-        // Hash new password
-        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-        
-        // Update password
-        $stmt = $pdo->prepare("UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?");
-        
-        if ($stmt->execute([$hashed_password, $user_id])) {
+        if (!password_verify($current_password, $user['password'])) {
+            $error_message = 'Current password is incorrect.';
+        } elseif ($new_password !== $confirm_password) {
+            $error_message = 'New passwords do not match.';
+        } elseif (strlen($new_password) < 8) {
+            $error_message = 'New password must be at least 8 characters long.';
+        } else {
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$hashed_password, $user_id]);
+            
             $success_message = 'Password changed successfully!';
             logActivity($user_id, 'Change Password', 'Changed account password');
-            
-            // Redirect to prevent form resubmission
-            header('Location: profile.php?password_changed=1');
-            exit;
-        } else {
-            throw new Exception('Failed to change password. Please try again.');
         }
     } catch (Exception $e) {
-        $error_message = $e->getMessage();
-        error_log("Password change error for user $user_id: " . $e->getMessage());
+        $error_message = 'Error changing password: ' . $e->getMessage();
     }
-}
-
-// Check for redirect messages
-if (isset($_GET['updated'])) {
-    $success_message = 'Profile updated successfully!';
-}
-if (isset($_GET['password_changed'])) {
-    $success_message = 'Password changed successfully!';
 }
 
 // Fetch user data
-try {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->execute([$user_id]);
-    $user = $stmt->fetch();
-    
-    if (!$user) {
-        die('User not found');
-    }
-} catch (Exception $e) {
-    die('Error loading user data: ' . $e->getMessage());
-}
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch();
 
 // Get user statistics
-try {
-    $stats = [
-        'total_apps' => $pdo->query("SELECT COUNT(*) FROM applications")->fetchColumn() ?: 0,
-        'apps_today' => $pdo->query("SELECT COUNT(*) FROM applications WHERE DATE(created_at) = CURDATE()")->fetchColumn() ?: 0,
-        'total_users' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn() ?: 0,
-        'account_age' => floor((time() - strtotime($user['created_at'])) / 86400)
-    ];
-} catch (Exception $e) {
-    $stats = [
-        'total_apps' => 0,
-        'apps_today' => 0,
-        'total_users' => 0,
-        'account_age' => 0
-    ];
-}
+$stats = [
+    'total_apps' => $pdo->query("SELECT COUNT(*) FROM applications")->fetchColumn() ?: 0,
+    'apps_today' => $pdo->query("SELECT COUNT(*) FROM applications WHERE DATE(created_at) = CURDATE()")->fetchColumn() ?: 0,
+    'total_users' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn() ?: 0,
+    'account_age' => floor((time() - strtotime($user['created_at'])) / 86400)
+];
 
 // Get recent activity
-try {
-    $recent_activity = $pdo->prepare("SELECT * FROM activity_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
-    $recent_activity->execute([$user_id]);
-    $activities = $recent_activity->fetchAll();
-} catch (Exception $e) {
-    $activities = [];
-}
+$recent_activity = $pdo->prepare("SELECT * FROM activity_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$recent_activity->execute([$user_id]);
+$activities = $recent_activity->fetchAll();
 
 $pageTitle = 'My Profile';
 include '../includes/header.php';

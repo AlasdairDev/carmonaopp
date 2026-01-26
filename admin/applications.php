@@ -575,9 +575,82 @@ include '../includes/header.php';
 .filter-group input[type="text"] {
     border-radius: 8px !important;
 }
+@media (max-width: 768px) {
+    .container {
+        /* Pushes content down so the green header isn't cut by the 70px navbar */
+        padding: 90px 1rem 1rem 1rem !important; 
+    }
+
+    /* Stack filters vertically */
+    .filters-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Make buttons full width */
+    .filter-actions {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+    }
+
+    /* Prevent table from stretching the screen */
+    .table-container {
+        width: 100% !important;
+        overflow-x: auto !important;
+        display: block !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+.container { padding-top: 100px !important; }
+
+@media (max-width: 1024px) {
+    .filters-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 768px) {
+    .filters-grid { grid-template-columns: 1fr !important; }
+    .filter-actions { grid-template-columns: 1fr !important; }
+    .table-container { overflow-x: auto !important; display: block !important; } /* Stops exceeding screen */
+}
+/* Hides the default burger menu/navbar from header.php */
+.navbar { 
+    display: none !important; 
+}
+
+/* Adjusts padding so your new navbar doesn't cut the green header */
+.container {
+    padding-top: 90px !important;
+}
+
+/* Makes sure the page doesn't exceed screen width on mobile */
+body {
+    overflow-x: hidden !important;
+}
     </style>
 </head>
 <body>
+
+<nav class="top-navbar">
+    <a href="dashboard.php" class="nav-brand">
+        <img src="../assets/carmona-logo.png" alt="Logo" onerror="this.style.display='none'"> 
+        <span>ADMIN PORTAL</span>
+    </a>
+
+    <button class="burger-menu" id="burgerMenu" onclick="toggleMobileNav()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</nav>
+
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
+<div class="mobile-nav-menu" id="mobileNavMenu">
+    <div class="mobile-nav-header">
+        <h3>Admin Menu</h3>
+        <button onclick="closeMobileNav()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary)">&times;</button>
+    </div>
+    </div>
+
     <div class="container">
         <!-- Page Header -->
         <div class="page-header">
@@ -776,6 +849,31 @@ include '../includes/header.php';
     </div>
 
     <script>
+    /* --- PASTE STEP 3 HERE (Top of the script) --- */
+    function toggleMobileNav() {
+        const menu = document.getElementById('mobileNavMenu');
+        const overlay = document.getElementById('mobileNavOverlay');
+        const burger = document.getElementById('burgerMenu');
+        
+        menu.classList.toggle('show');
+        overlay.classList.toggle('show');
+        burger.classList.toggle('active');
+    }
+
+    function closeMobileNav() {
+        const menu = document.getElementById('mobileNavMenu');
+        const overlay = document.getElementById('mobileNavOverlay');
+        const burger = document.getElementById('burgerMenu');
+        
+        menu.classList.remove('show');
+        overlay.classList.remove('show');
+        burger.classList.remove('active');
+    }
+
+    /* --- YOUR EXISTING CODE CONTINUES BELOW --- */
+    async function updateServiceFilter() { 
+        // ... rest of your existing code ...
+    }
     // Update service filter based on department
     async function updateServiceFilter() {
         const departmentId = document.getElementById('departmentFilter').value;

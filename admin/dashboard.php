@@ -74,6 +74,16 @@ include '../includes/header.php';
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
+
+    /* Hide the global header navbar so we only see the local Admin Menu */
+.navbar {
+    display: none !important;
+}
+
+/* Remove the top padding from the body since the global navbar is gone */
+body {
+    padding-top: 0 !important;
+}
     * {
         margin: 0;
         padding: 0;
@@ -273,11 +283,14 @@ include '../includes/header.php';
        EXISTING DASHBOARD STYLES
        ========================================= */
 
-    .dashboard-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 1.5rem 1.5rem 1.5rem;
-    }
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    /* Increase top padding to 80px-90px to push content below the 70px navbar */
+    padding: 90px 1.5rem 1.5rem 1.5rem !important; 
+    width: 100%;
+    box-sizing: border-box;
+}
 
     /* Header */
     .dashboard-header {
@@ -941,6 +954,43 @@ include '../includes/header.php';
             font-size: 0.9rem;
         }
     }
+    @media (max-width: 768px) {
+    /* Force the Table and Chart to stack vertically */
+    .content-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Force the cards to stay within the screen width */
+    .card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Make the table scrollable INSIDE the card so it doesn't push the card out */
+    .modern-table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+    }
+
+    /* Fix the chart container so it doesn't overflow */
+    .chart-wrapper {
+        width: 100% !important;
+        height: 300px !important;
+    }
+}
+@media (max-width: 768px) {
+    .content-grid {
+        grid-template-columns: 1fr !important; /* Stacks the table and chart vertically */
+    }
+}
 </style>
 
 <nav class="top-navbar">
