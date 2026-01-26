@@ -1040,6 +1040,9 @@ body {
         </a>
 
         <div class="nav-section-title">Account</div>
+        <a href="profile.php" class="nav-link">
+            <i class="fas fa-user"></i> Profile
+        </a>
         <a href="../auth/logout.php" class="nav-link" style="color: #ef4444;">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
