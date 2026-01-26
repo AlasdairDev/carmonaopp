@@ -737,54 +737,10 @@ include '../includes/header.php';
         transform: translateX(-400px);  /* Change to slide out left */
     }
 }
-.container { padding-top: 100px !important; }
-
-.search-box { width: 100% !important; max-width: 100% !important; }
-
-@media (max-width: 768px) {
-    .top-controls { flex-direction: column !important; align-items: stretch !important; }
-    .tabs-container { flex-direction: column !important; }
-    .data-table { overflow-x: auto !important; }
-}
-/* Hides the default burger menu/navbar from header.php */
-.navbar { 
-    display: none !important; 
-}
-
-/* Adjusts padding so your new navbar doesn't cut the green header */
-.container {
-    padding-top: 90px !important;
-}
-
-/* Makes sure the page doesn't exceed screen width on mobile */
-body {
-    overflow-x: hidden !important;
-}
     </style>
 </head>
 
 <body>
-
-<nav class="top-navbar">
-    <a href="dashboard.php" class="nav-brand">
-        <img src="../assets/carmona-logo.png" alt="Logo" onerror="this.style.display='none'"> 
-        <span>ADMIN PORTAL</span>
-    </a>
-
-    <button class="burger-menu" id="burgerMenu" onclick="toggleMobileNav()">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-</nav>
-
-<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
-<div class="mobile-nav-menu" id="mobileNavMenu">
-    <div class="mobile-nav-header">
-        <h3>Admin Menu</h3>
-        <button onclick="closeMobileNav()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary)">&times;</button>
-    </div>
-    </div>
 
     <div class="container">
         <!-- Header -->
@@ -1028,31 +984,6 @@ body {
     </div>
 
     <script>
-    /* --- PASTE STEP 3 HERE (Top of the script) --- */
-    function toggleMobileNav() {
-        const menu = document.getElementById('mobileNavMenu');
-        const overlay = document.getElementById('mobileNavOverlay');
-        const burger = document.getElementById('burgerMenu');
-        
-        menu.classList.toggle('show');
-        overlay.classList.toggle('show');
-        burger.classList.toggle('active');
-    }
-
-    function closeMobileNav() {
-        const menu = document.getElementById('mobileNavMenu');
-        const overlay = document.getElementById('mobileNavOverlay');
-        const burger = document.getElementById('burgerMenu');
-        
-        menu.classList.remove('show');
-        overlay.classList.remove('show');
-        burger.classList.remove('active');
-    }
-
-    /* --- YOUR EXISTING CODE CONTINUES BELOW --- */
-    async function updateServiceFilter() { 
-        // ... rest of your existing code ...
-    }
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
