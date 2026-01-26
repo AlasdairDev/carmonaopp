@@ -843,7 +843,6 @@ if (isset($_GET['clear']) && $_GET['clear'] == '1') {
         echo 'alert("Error clearing logs: ' . addslashes($e->getMessage()) . '");';
     }
 }
-?>
 </script>
 
 </body>

@@ -130,22 +130,193 @@ include '../includes/header.php';
         transform: translate(30%, -30%);
     }
 
-    .dashboard-header h1 {
-        font-size: 2rem;           /* Changed from 1.75rem */
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-left h1 {
+        font-size: 2rem;
         font-weight: 800;
         margin-bottom: 0.25rem;
-        position: relative;
-        z-index: 1;
     }
 
-    .dashboard-header p {
-        font-size: 1rem;           /* Changed from 0.95rem */
+    .header-left p {
+        font-size: 1rem;
         opacity: 0.95;
-        position: relative;
-        z-index: 1;
     }
 
-    /* Stats Grid - Compact Version */
+    /* Burger Menu */
+    .burger-menu {
+        display: none;
+        flex-direction: column;
+        gap: 0.4rem;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        padding: 0.75rem;
+        border-radius: 8px;
+        z-index: 1001;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .burger-menu:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+    }
+
+    .burger-menu span {
+        width: 25px;
+        height: 3px;
+        background: white;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+        display: block;
+    }
+
+    .burger-menu.active span:nth-child(1) {
+        transform: rotate(45deg) translate(8px, 8px);
+    }
+
+    .burger-menu.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .burger-menu.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(8px, -8px);
+    }
+
+    /* Mobile Navigation */
+    .mobile-nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-nav-overlay.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .mobile-nav-menu {
+        display: none;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100%;
+        background: white;
+        z-index: 1000;
+        padding: 1.5rem;
+        overflow-y: auto;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+        transition: right 0.3s ease;
+    }
+
+    .mobile-nav-menu.show {
+        display: block;
+        right: 0;
+    }
+
+    .mobile-nav-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 1.5rem;
+    }
+
+    .mobile-nav-header h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .mobile-nav-close {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-nav-close:hover {
+        background: var(--background);
+        color: var(--text-primary);
+    }
+
+    .mobile-nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .mobile-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .mobile-nav-link:hover {
+        background: linear-gradient(135deg, var(--primary-light) 0%, rgba(139, 195, 74, 0.2) 100%);
+        color: var(--primary-dark);
+    }
+
+    .mobile-nav-link.active {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+    }
+
+    .mobile-nav-link i {
+        font-size: 1.25rem;
+        width: 24px;
+        text-align: center;
+    }
+
+    .mobile-nav-section {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--border);
+    }
+
+    .mobile-nav-section-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
+        padding-left: 1rem;
+    }
+
+    /* Stats Grid */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(6, 1fr);
@@ -438,101 +609,6 @@ include '../includes/header.php';
         background: rgba(255, 255, 255, 0.2);
     }
 
-    /* Custom icons */
-    .icon-settings {
-        position: relative;
-    }
-
-    .icon-settings::before {
-        content: '';
-        position: absolute;
-        width: 60%;
-        height: 60%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: currentColor;
-        clip-path: polygon(
-            50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%
-        );
-    }
-
-    .icon-reports {
-        position: relative;
-    }
-
-    .icon-reports::before {
-        content: '';
-        position: absolute;
-        width: 60%;
-        height: 60%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: 
-            linear-gradient(to top, currentColor 30%, transparent 30%) 10% 100%/15% 100% no-repeat,
-            linear-gradient(to top, currentColor 60%, transparent 60%) 35% 100%/15% 100% no-repeat,
-            linear-gradient(to top, currentColor 45%, transparent 45%) 60% 100%/15% 100% no-repeat,
-            linear-gradient(to top, currentColor 75%, transparent 75%) 85% 100%/15% 100% no-repeat;
-    }
-
-    .icon-activity {
-        position: relative;
-    }
-
-    .icon-activity::before {
-        content: '';
-        position: absolute;
-        width: 50%;
-        height: 50%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border: 4px solid currentColor;
-        border-radius: 50%;
-    }
-
-    .icon-activity::after {
-        content: '';
-        position: absolute;
-        width: 3px;
-        height: 20%;
-        background: currentColor;
-        top: 35%;
-        left: 50%;
-        transform-origin: bottom center;
-        transform: translateX(-50%) rotate(45deg);
-    }
-
-    .icon-email {
-        position: relative;
-    }
-
-    .icon-email::before {
-        content: '';
-        position: absolute;
-        width: 55%;
-        height: 40%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border: 4px solid currentColor;
-        border-radius: 4px;
-    }
-
-    .icon-email::after {
-        content: '';
-        position: absolute;
-        width: 55%;
-        height: 0;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-left: calc(55% * 0.5) solid transparent;
-        border-right: calc(55% * 0.5) solid transparent;
-        border-top: 20px solid currentColor;
-    }
-
     .action-btn span {
         font-size: 1rem;
         letter-spacing: 0.5px;
@@ -734,6 +810,10 @@ include '../includes/header.php';
     }
 
     @media (max-width: 1024px) {
+        .burger-menu {
+            display: flex !important;
+        }
+
         .content-grid {
             grid-template-columns: 1fr;
         }
@@ -744,6 +824,31 @@ include '../includes/header.php';
     }
 
     @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 0 1rem 1rem 1rem;
+        }
+
+        .dashboard-header {
+            padding: 1.5rem;
+        }
+
+        .header-content {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-left h1 {
+            font-size: 1.5rem;
+        }
+
+        .header-left p {
+            font-size: 0.875rem;
+        }
+
         .stats-grid {
             grid-template-columns: 1fr;
         }
@@ -767,14 +872,109 @@ include '../includes/header.php';
         .action-btn span {
             font-size: 0.9rem;
         }
+
+        .mobile-nav-menu {
+            width: 85%;
+            max-width: 320px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .mobile-nav-menu {
+            width: 90%;
+        }
     }
 </style>
 
 <div class="dashboard-container">
     <!-- Header -->
     <div class="dashboard-header animate__animated animate__fadeInDown">
-        <h1>Welcome Back, Admin!</h1>
-        <p>Here's what's happening with your permit tracking system today</p>
+        <div class="header-content">
+            <div class="header-left">
+                <h1>Welcome Back, Admin!</h1>
+                <p>Here's what's happening with your permit tracking system today</p>
+            </div>
+            
+            <!-- Burger Menu Button -->
+            <button class="burger-menu" id="burgerMenu" onclick="toggleMobileNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
+
+    <!-- Mobile Navigation Menu -->
+    <div class="mobile-nav-menu" id="mobileNavMenu">
+        <div class="mobile-nav-header">
+            <h3>Admin Menu</h3>
+            <button class="mobile-nav-close" onclick="closeMobileNav()">&times;</button>
+        </div>
+
+        <!-- Main Navigation -->
+        <div class="mobile-nav-links">
+            <a href="dashboard.php" class="mobile-nav-link">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="applications.php" class="mobile-nav-link">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Applications</span>
+            </a>
+            <a href="verify_payments.php" class="mobile-nav-link">
+                <i class="fas fa-money-check-alt"></i>
+                <span>Verify Payments</span>
+            </a>
+            <a href="users.php" class="mobile-nav-link">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+            </a>
+            <a href="notifications.php" class="mobile-nav-link">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+        </div>
+
+        <!-- Management Section -->
+        <div class="mobile-nav-section">
+            <div class="mobile-nav-section-title">Management</div>
+            <div class="mobile-nav-links">
+                <a href="manage_departments.php" class="mobile-nav-link">
+                    <i class="fas fa-building"></i>
+                    <span>Departments & Services</span>
+                </a>
+                <a href="reports.php" class="mobile-nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="activity_logs.php" class="mobile-nav-link">
+                    <i class="fas fa-history"></i>
+                    <span>Activity Logs</span>
+                </a>
+                <a href="check_email_and_sms_logs.php" class="mobile-nav-link">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email/SMS Logs</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Account Section -->
+        <div class="mobile-nav-section">
+            <div class="mobile-nav-section-title">Account</div>
+            <div class="mobile-nav-links">
+                <a href="profile.php" class="mobile-nav-link">
+                    <i class="fas fa-user-circle"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="../auth/logout.php" class="mobile-nav-link" style="color: #ef4444;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- Statistics Grid -->
@@ -887,19 +1087,27 @@ include '../includes/header.php';
             </div>
             <div class="quick-actions">
                 <a href="manage_departments.php" class="action-btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                    <div class="icon-logo icon-settings"></div>
+                    <div class="icon-logo">
+                        <i class="fas fa-building"></i>
+                    </div>
                     <span>Departments & Services</span>
                 </a>
                 <a href="reports.php" class="action-btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
-                    <div class="icon-logo icon-reports"></div>
+                    <div class="icon-logo">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                     <span>View Reports</span>
                 </a>
                 <a href="activity_logs.php" class="action-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
-                    <div class="icon-logo icon-activity"></div>
+                    <div class="icon-logo">
+                        <i class="fas fa-history"></i>
+                    </div>
                     <span>Activity Logs</span>
                 </a>
                 <a href="check_email_and_sms_logs.php" class="action-btn" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);">
-                    <div class="icon-logo icon-email"></div>
+                    <div class="icon-logo">
+                        <i class="fas fa-envelope"></i>
+                    </div>
                     <span>Email/SMS Logs</span>
                 </a>
             </div>
@@ -1067,6 +1275,61 @@ include '../includes/header.php';
             }
         });
     }
+
+    // Mobile Navigation Functions
+    function toggleMobileNav() {
+        const menu = document.getElementById('mobileNavMenu');
+        const overlay = document.getElementById('mobileNavOverlay');
+        const burger = document.getElementById('burgerMenu');
+        
+        menu.classList.toggle('show');
+        overlay.classList.toggle('show');
+        burger.classList.toggle('active');
+        
+        if (menu.classList.contains('show')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    function closeMobileNav() {
+        const menu = document.getElementById('mobileNavMenu');
+        const overlay = document.getElementById('mobileNavOverlay');
+        const burger = document.getElementById('burgerMenu');
+        
+        menu.classList.remove('show');
+        overlay.classList.remove('show');
+        burger.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close menu on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMobileNav();
+        }
+    });
+
+    // Highlight active page in mobile menu
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPage = window.location.pathname.split('/').pop();
+        const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+        
+        mobileLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href === currentPage) {
+                link.classList.add('active');
+            }
+        });
+    });
+
+    // Close menu when clicking a link
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', function() {
+            closeMobileNav();
+        });
+    });
 </script>
 
 <?php include '../includes/footer.php'; ?>

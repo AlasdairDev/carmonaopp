@@ -147,6 +147,7 @@ if (!defined('SITE_NAME')) {
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
 
@@ -173,6 +174,41 @@ if (!defined('SITE_NAME')) {
         .btn-register:hover {
             background: #6a9322;
             transform: translateY(-2px);
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 0.4rem;
+            cursor: pointer;
+            background: #7BA428;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            z-index: 1001;
+            position: relative;
+        }
+
+        .menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            display: block;
+        }
+
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
         }
 
 
@@ -571,66 +607,325 @@ if (!defined('SITE_NAME')) {
         }
 
 
-        /* Responsive Design */
+        /* ===================================
+           RESPONSIVE DESIGN - MOBILE/TABLET
+           =================================== */
+
+        /* Large Tablets & Small Laptops (1024px and below) */
         @media (max-width: 1024px) {
             .hero-content,
             .mission-vision-container {
                 grid-template-columns: 1fr;
+                gap: 2rem;
             }
 
+            .hero-content {
+                grid-template-columns: 1fr;
+            }
+
+            /* Swap order on tablet - image first, text second */
+            .hero-placeholder {
+                order: 1;
+            }
+
+            .hero-text {
+                order: 2;
+            }
 
             .steps-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .hero-text h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero-text p {
+                font-size: 1.1rem;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .mission-vision-text h2 {
+                font-size: 2rem;
+            }
         }
 
-
+        /* Tablets (768px and below) */
         @media (max-width: 768px) {
             .navbar .container {
+                flex-wrap: wrap;
+                padding: 0 1.5rem;
+                position: relative;
+            }
+
+            .navbar-brand {
+                order: 1;
+                flex: 1;
+            }
+
+            .menu-toggle {
+                display: flex !important;
+                order: 2;
+            }
+
+            .navbar-menu {
+                order: 3;
+                flex-direction: column;
+                width: 100%;
+                background: white;
+                padding: 0;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                border-radius: 0 0 12px 12px;
+                margin-top: 1rem;
+                display: none;
+            }
+
+            .navbar-menu.show {
+                display: flex;
+                animation: slideDown 0.3s ease;
+            }
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .nav-links {
+                flex-direction: column;
+                gap: 0;
+                margin-right: 0;
+                text-align: center;
+                width: 100%;
+                padding: 1rem 0;
+                margin-bottom: 0;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .nav-links a {
+                padding: 0.75rem 1rem;
+                width: 100%;
+                display: block;
+            }
+
+            .nav-links a:hover {
+                background: #f8f9fa;
+            }
+
+            .navbar-menu .btn-login,
+            .navbar-menu .btn-register {
+                width: 90%;
+                margin: 0.5rem auto;
+                text-align: center;
+                justify-content: center;
+                display: flex;
+            }
+
+            .navbar-menu .btn-register {
+                margin-bottom: 1rem;
+            }
+
+            .navbar-title {
+                font-size: 1rem;
+            }
+
+            .navbar-brand a img {
+                width: 40px !important;
+                height: 40px !important;
+            }
+
+            .hero-section {
+                padding-top: 100px;
+                padding-bottom: 3rem;
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+                min-height: auto;
+            }
+
+            .hero-text h1 {
+                font-size: 2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .hero-text p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .hero-actions {
                 flex-direction: column;
                 gap: 1rem;
             }
 
-
-            .nav-links {
-                flex-direction: column;
-                gap: 0.5rem;
-                margin-right: 0;
+            .hero-actions .btn {
+                width: 100%;
                 text-align: center;
             }
 
-
-            .navbar-menu {
-                flex-direction: column;
+            .hero-placeholder {
+                min-height: 250px;
+                margin-bottom: 1.5rem;
             }
-
-
-            .hero-text h1 {
-                font-size: 2.5rem;
-            }
-
 
             .steps-grid {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
 
-
-            .section-header h2,
-            .cta-section h2 {
-                font-size: 2rem;
+            .step-card {
+                padding: 1.5rem;
             }
 
+            .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 1.75rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.75rem;
+            }
+
+            .section-header p {
+                font-size: 1rem;
+            }
+
+            .mission-vision-section,
+            .how-it-works-section {
+                padding: 3rem 1.5rem;
+                min-height: auto;
+            }
+
+            .mission-vision-container {
+                gap: 2rem;
+            }
+
+            .mission-vision-text h2 {
+                font-size: 1.75rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .mission-vision-text p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .mv-card {
+                padding: 1.5rem;
+            }
+
+            .mv-card h3 {
+                font-size: 1.25rem;
+            }
 
             .footer-content {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 2rem;
             }
+
+            .footer-column h3 {
+                font-size: 1.1rem;
+            }
+
+            .footer-section {
+                padding: 2rem 1.5rem;
+                min-height: auto;
+            }
         }
 
-
+        /* Mobile Phones (480px and below) */
         @media (max-width: 480px) {
+            .navbar .container {
+                padding: 0 1rem;
+            }
+
+            .hero-section {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .hero-text h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-text p {
+                font-size: 0.9375rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9375rem;
+            }
+
+            .hero-placeholder {
+                min-height: 200px;
+            }
+
+            .section-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .section-header p {
+                font-size: 0.9375rem;
+            }
+
+            .mission-vision-text h2 {
+                font-size: 1.5rem;
+            }
+
+            .mission-vision-text p {
+                font-size: 0.9375rem;
+            }
+
+            .step-card h3 {
+                font-size: 1.1rem;
+            }
+
+            .step-card p {
+                font-size: 0.875rem;
+            }
+
             .footer-content {
                 grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .footer-column {
+                text-align: center;
+            }
+
+            .footer-contact-item {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .mv-card-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Very Small Screens (360px and below) */
+        @media (max-width: 360px) {
+            .hero-text h1 {
+                font-size: 1.5rem;
+            }
+
+            .navbar-title {
+                font-size: 0.875rem;
+            }
+
+            .btn-login, .btn-register {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
             }
         }
     </style>
@@ -647,8 +942,13 @@ if (!defined('SITE_NAME')) {
             </a>
         </div>
 
+        <button class="menu-toggle" id="menuToggle" type="button" onclick="document.getElementById('navbarMenu').classList.toggle('show'); this.classList.toggle('active'); console.log('BURGER CLICKED!');">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
 
-        <div class="navbar-menu">
+        <div class="navbar-menu" id="navbarMenu">
             <nav class="nav-links">
                 <a href="#home">Home</a>
                 <a href="#how-it-works">How It Works</a>
@@ -820,10 +1120,3 @@ if (!defined('SITE_NAME')) {
 
 
         </div>
-    </div>
-</footer>
-
-
-</body>
-</html>
-

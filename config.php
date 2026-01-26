@@ -15,7 +15,8 @@ date_default_timezone_set('Asia/Manila');
 $isLocal = (
     $_SERVER['HTTP_HOST'] === 'localhost' || 
     $_SERVER['HTTP_HOST'] === '127.0.0.1' ||
-    strpos($_SERVER['HTTP_HOST'], 'localhost:') === 0
+    strpos($_SERVER['HTTP_HOST'], 'localhost:') === 0 ||
+    strpos($_SERVER['HTTP_HOST'], 'ngrok-free.dev') !== false // ADD THIS LINE
 );
 
 // 4. Error Reporting (Different for Local vs Production)
@@ -51,21 +52,22 @@ if ($isLocal) {
 // 6. System Constants
 define('SITE_NAME', 'Carmona Online Permit Portal');
 
-// AUTOMATIC BASE URL DETECTION
-$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+// 7. AUTOMATIC BASE URL DETECTION (FIXED)
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
 $host = $_SERVER['HTTP_HOST'];
-$scriptPath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
 
-if ($isLocal) {
+// Check if localhost
+if (strpos($host, 'localhost') !== false || $host === '127.0.0.1') {
     define('BASE_URL', 'http://localhost/carmonaopp');
-} else {
-    // Auto-detect production URL
+}
+// Check if ngrok
+elseif (strpos($host, 'ngrok') !== false) {
+    define('BASE_URL', $protocol . "://" . $host . "/carmonaopp");
+}
+// Production
+else {
     define('BASE_URL', 'https://carmonaops.infinityfreeapp.com');
 }
-
-define('UPLOAD_DIR', __DIR__ . '/assets/uploads/');
-define('MAX_FILE_SIZE', 5242880); // 5MB
-
 
 // 8. Initialize PDO (Primary connection)
 try {
