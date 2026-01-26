@@ -1,0 +1,80 @@
+# Local Government Permit Tracking System
+## File Structure (Vanilla PHP + MySQL)
+
+```
+lgu-permit-tracking/
+│
+├── index.php                      # Landing page
+├── config.php                     # Database configuration
+│
+├── assets/
+│   ├── css/
+│   │   ├── style.css             # Main stylesheet
+│   │   └── admin.css             # Admin dashboard styles\
+│   │   └── apply-form.css        
+│   ├── js/
+│   │   ├── main.js               # Common functions
+│   │   ├── apply-form.js         # Form validation
+│   └── uploads/
+│       ├── documents/            # User uploaded documents
+│       └── permits/              # Generated permits
+│
+├── auth/
+│   ├── login.php                 # Login page
+│   ├── register.php              # Registration page
+│   ├── logout.php                # Logout handler
+│
+├── includes/
+│   ├── email_templates
+│   ├── footer.php                # Common footer
+│   ├── functions.php
+│   ├── header.php                # Common header
+│   ├── qr_codes.php
+│   ├── security.php
+│   ├── send_email.php
+│   └── send_sms.php            
+│
+├── user/
+│   ├── applications.php             
+│   ├── apply.php                 
+│   ├── dashboard.php
+│   ├── download_qr.php
+│   ├── notification.php          # Track application
+│   ├── profile.php               # User profile
+│   ├── submit_payment
+│   ├── track.php              
+│   ├── view_application.php              
+│   └──           # Application history
+│
+├── admin
+│   ├── applications.php          # Manage applications
+│   ├── activity_logs.php       
+│   ├── check_email_log.php
+│   ├── dashboard.php             # Admin dashboard  
+│   ├── debug_approval.php  
+│   ├── manage_departments.php
+│   ├── notifications.php
+│   ├── profile.php    
+│   ├── reports.php
+│   ├── users.php                 # User management
+│   ├── verify_payments.php              
+│   └── view_application.php               # Reports & analytics
+│
+├── api/
+│   ├── approve_with_payment.php
+│   ├── clear_logs.php
+│   ├── create_notification.php
+│   ├── delete_user.php
+│   ├── get_departments.php
+│   ├── get_notifications.php 
+│   ├── get-services.php 
+│   ├── get-user.php
+│   ├── mark_notification_read.php 
+│   ├── save_user.php
+│   ├── submit_department_application.php    # Handle application submission
+│   ├── submit_payment.php
+│   ├── update-application.php
+│   └── verify_payment.php
+
+├── database/
+│   └── schema.sql                # Database structure
