@@ -19,10 +19,6 @@ $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 
 $pageTitle = 'Email & SMS Logs';
 include '../includes/header.php';
-
-// Initialize variables
-$email_table_exists = false;
-$sms_table_exists = false;
 ?>
 
 <!DOCTYPE html>
@@ -161,9 +157,6 @@ $sms_table_exists = false;
 
         .btn-secondary:hover {
             background: #cbd5e1;
-            color: var(--text-primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(226, 232, 240, 0.5);
         }
 
         .btn-primary {
@@ -172,7 +165,6 @@ $sms_table_exists = false;
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
         }
@@ -491,6 +483,19 @@ $sms_table_exists = false;
                 grid-template-columns: 1fr;
             }
         }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(226, 232, 240, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -646,7 +651,7 @@ $sms_table_exists = false;
                     <h3>Filter Logs</h3>
                 </div>
 
-                <form method="GET" action="" id="filter-form">
+                <form method="GET" action="">
                     <div class="filters-grid">
                         <div class="filter-group">
                             <label>Type</label>
@@ -695,7 +700,7 @@ $sms_table_exists = false;
             <div class="content-card">
                 <div class="content-header">
                     <h2>
-                        <i class="fas fa-<?php echo $type_filter === 'sms' ? 'comments' : 'envelope'; ?>"></i>
+                        <i class="fas fa-<?php echo $type_filter === 'sms' ? 'sms' : 'envelope'; ?>"></i>
                         <?php echo ucfirst($type_filter); ?> Logs
                     </h2>
                     <span class="last-updated">
@@ -805,27 +810,25 @@ function clearLogs() {
         }
     }
 }
-
 // Validate date range
-const filterForm = document.getElementById('filter-form');
-if (filterForm) {
-    filterForm.addEventListener('submit', function(e) {
-        const dateFrom = document.querySelector('input[name="date_from"]').value;
-        const dateTo = document.querySelector('input[name="date_to"]').value;
+document.querySelector('form').addEventListener('submit', function(e) {
+    const dateFrom = document.querySelector('input[name="date_from"]').value;
+    const dateTo = document.querySelector('input[name="date_to"]').value;
+    
+    if (dateFrom && dateTo) {
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
         
-        if (dateFrom && dateTo) {
-            const fromDate = new Date(dateFrom);
-            const toDate = new Date(dateTo);
-            
-            if (fromDate > toDate) {
-                e.preventDefault();
-                alert('❌ Error: "Date From" cannot be later than "Date To"');
-                return false;
-            }
+        if (fromDate > toDate) {
+            e.preventDefault();
+            alert('❌ Error: "Date From" cannot be later than "Date To"');
+            return false;
         }
-    });
-}
+    }
+});
 
+// Handle clear logs
+// Handle clear logs
 <?php
 if (isset($_GET['clear']) && $_GET['clear'] == '1') {
     try {
