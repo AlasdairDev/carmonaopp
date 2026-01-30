@@ -403,7 +403,7 @@ include '../includes/header.php';
                     </select>
                 </div>
 
-                <!-- ADD THIS - Department field -->
+                <!-- Department field -->
                 <div class="form-group" id="departmentGroup" style="display: none;">
                     <label for="department">Department <span class="text-danger">*</span></label>
                     <select class="form-control" id="department" name="department_id">
@@ -450,7 +450,7 @@ include '../includes/header.php';
             </form>
         </div>
     </div>
-    <!-- Around line 609 - Make sure your Deactivation Modal looks like this -->
+    <!-- Deactivation Modal -->
     <div id="deactivateModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
@@ -601,10 +601,10 @@ include '../includes/header.php';
             document.getElementById('password').type = 'password';
             document.getElementById('confirmPassword').type = 'password';
 
-            // FIX: Reset icons to eye-slash (closed eye) for hidden passwords
+            // Reset icons to eye-slash (closed eye) for hidden passwords
             document.querySelectorAll('.password-toggle i').forEach(icon => {
-                icon.classList.remove('fa-eye');           // Remove open eye
-                icon.classList.add('fa-eye-slash');        // Add closed eye
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');        
             });
 
             document.getElementById('userModal').classList.add('show');
@@ -799,7 +799,7 @@ include '../includes/header.php';
             }
 
             if (errors.length > 0) {
-                // Show first error as toast
+                // Show first error 
                 showToast(errors[0], 'error');
                 return false;
             }
@@ -819,10 +819,9 @@ include '../includes/header.php';
                     showToast(result.message || 'User saved successfully!', 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    // ✅ FIXED: Show the specific error message from server
+    
                     showToast(result.message || 'An error occurred while saving.', 'error');
 
-                    // ✅ NEW: Highlight the specific field if it's a duplicate error
                     if (result.message.includes('Email')) {
                         showError('email', result.message);
                     } else if (result.message.includes('Mobile')) {
@@ -842,7 +841,7 @@ include '../includes/header.php';
         let reactivateUserIsAdmin = false;
 
         function deactivateUser(userId, isAdmin) {
-            deactivateUserId = userId;  // Store the userId
+            deactivateUserId = userId;  
             deactivateUserIsAdmin = isAdmin;
 
             // Get user info from the row
@@ -852,7 +851,6 @@ include '../includes/header.php';
                 return;
             }
 
-            // FIX: Better way to get user name - remove badges properly
             const userNameElement = row.querySelector('.user-name');
             let userName = userNameElement.textContent;
             // Remove all badges from the name
@@ -905,7 +903,6 @@ include '../includes/header.php';
                 return;
             }
 
-            // FIX: Better way to get user name
             const userNameElement = row.querySelector('.user-name');
             let extractedName = userNameElement.textContent;
             const badges = userNameElement.querySelectorAll('.badge');
@@ -946,7 +943,6 @@ include '../includes/header.php';
         document.getElementById('confirmDeactivateBtn').addEventListener('click', async function () {
             if (!deactivateUserId) return;
 
-            // ✅ FIX: Save the user ID BEFORE closing modal
             const userIdToDeactivate = deactivateUserId;
 
             // Close modal
@@ -986,7 +982,6 @@ include '../includes/header.php';
         document.getElementById('confirmReactivateBtn').addEventListener('click', async function () {
             if (!reactivateUserId) return;
 
-            // ✅ FIX: Save the user ID BEFORE closing modal
             const userIdToReactivate = reactivateUserId;
 
             // Close modal
