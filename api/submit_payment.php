@@ -2,7 +2,6 @@
 /**
  * API: Submit Payment Proof
  * Handles payment proof upload from users
- * ✅ AUTO STATUS CHANGE: Approved → Paid when user submits payment
  */
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -84,7 +83,7 @@ WHERE id = ? AND user_id = ? AND payment_required = 1 AND payment_status IN ('pe
     // Start transaction
     $pdo->beginTransaction();
 
-    // ✅ UPDATE APPLICATION: Change status from Approved to Paid automatically
+    // Change status from Approved to Paid automatically
     $stmt = $pdo->prepare("
         UPDATE applications SET
             payment_status = 'submitted',
@@ -141,8 +140,8 @@ WHERE id = ? AND user_id = ? AND payment_required = 1 AND payment_status IN ('pe
         $user_id,
         'Submit Payment',
         "Submitted payment for application {$app['tracking_number']} - Status changed to Paid",
-        null,  // details
-        $app['department_id']  // ADD THIS
+        null,  
+        $app['department_id']  
     );
     $pdo->commit();
 
@@ -238,7 +237,7 @@ WHERE id = ? AND user_id = ? AND payment_required = 1 AND payment_status IN ('pe
                 $details['email'],
                 $email_subject,
                 $email_body,
-                '',  // altBody
+                '', 
                 $user_id,
                 $app_id,
                 $app['department_id']
