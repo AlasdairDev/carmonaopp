@@ -20,7 +20,7 @@ $date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
 $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 $where = [];
 $params = [];
-// ADD THIS SECTION - Department-based access control
+// Department-based access control
 if (isDepartmentAdmin()) {
     $where[] = "a.department_id = ?";
     $params[] = getAdminDepartmentId();
@@ -120,7 +120,7 @@ include '../includes/header.php';
             </div>
         </div>
 
-        <!-- Improved Filters Card -->
+        <!-- Filters Card -->
         <div class="filters-section">
             <div class="filters-header">
                 <h3>
@@ -311,7 +311,6 @@ include '../includes/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- Feedback Modal -->
     <!-- Feedback Modal -->
     <div id="feedbackModal" class="modal">
         <div class="modal-content-small">
@@ -546,7 +545,6 @@ include '../includes/header.php';
             }
         }
 
-        // AJAX Filter Function
         // AJAX Filter Function
         function applyFilter(event) {
             event.preventDefault();
