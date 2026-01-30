@@ -1,7 +1,7 @@
 <style>
 
 /* ============================================
-   STANDARD ADMIN PAGE LAYOUT - v1.0
+   STANDARD ADMIN PAGE LAYOUT -
    ============================================ */
 * {
     margin: 0;
@@ -78,7 +78,6 @@ body {
     color: white;
     margin-bottom: 1.5rem;
     margin-top: 0;
-    /* ADD THIS */
     box-shadow: var(--shadow-lg);
     display: flex;
     justify-content: space-between;
@@ -133,7 +132,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     font-size: 1rem;
-    /* Changed from 0.875rem to 1rem */
+   
 }
 
 .btn-white {
