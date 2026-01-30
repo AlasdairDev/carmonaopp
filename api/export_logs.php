@@ -16,7 +16,7 @@ $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
 // Build query
 $where = [];
 $params = [];
-// ADD DEPARTMENT FILTERING
+// DEPARTMENT FILTERING
 if (isDepartmentAdmin()) {
     $dept_id = $_SESSION['department_id'];
     $where[] = "(al.department_id = ? OR al.related_department_id = ?)";
@@ -50,7 +50,7 @@ if ($date_to) {
 
 $where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// Get ALL logs (no pagination)
+// Get ALL logs
 $sql = "
     SELECT al.*, u.name, u.email
     FROM activity_logs al
