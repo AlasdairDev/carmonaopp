@@ -1,5 +1,5 @@
 <?php
-require_once '../config.php';  // FIXED: Correct path from /auth/
+require_once '../config.php';  
 require_once '../includes/functions.php';
 require_once '../includes/security.php';
 
@@ -12,7 +12,6 @@ if (isLoggedIn()) {
     }
 }
 
-// ✨ ADD THIS SECTION - Automatic cleanup of expired/used tokens
 try {
     $stmt = $pdo->prepare("CALL cleanup_expired_password_resets()");
     $stmt->execute();
