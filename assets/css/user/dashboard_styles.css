@@ -1,5 +1,4 @@
 
-/* Dashboard Enhancements */
 .wrapper {
     background: linear-gradient(135deg, #f5f7fa 0%, #e8f0f7 100%);
     min-height: calc(100vh - 40px);
@@ -449,7 +448,7 @@ body {
    font-size: 1.5rem;
 }
 
-/* Table View Button - Force Green */
+/* Table View Button - Green */
 .table .btn-primary,
 .card-body .btn-primary {
    background: linear-gradient(135deg, #7fb842, #6a9c35) !important;
