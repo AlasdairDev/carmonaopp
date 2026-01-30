@@ -24,7 +24,7 @@ $_SESSION['last_activity'] = time();
 $user_id = $_SESSION['user_id'];
 $user = getUserById($user_id);
 
-// Get user statistics - COMPLETE VERSION
+// Get user statistics 
 $stats = [
    'total' => 0,
    'pending' => 0,
@@ -201,8 +201,6 @@ body {
    line-height: 1.6;
    margin: 0;
 }
-
-/* Statistics Grid - REMOVED */
 
 /* Card Styling */
 .card {
