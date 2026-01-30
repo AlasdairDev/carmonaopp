@@ -18,7 +18,7 @@ $table = $type_filter === 'sms' ? 'sms_logs' : 'email_logs';
 $where = ["1=1"];
 $params = [];
 
-// ADD DEPARTMENT FILTERING
+// DEPARTMENT FILTERING
 if (isDepartmentAdmin()) {
     $dept_id = $_SESSION['department_id'];
     $where[] = "department_id = ?";
@@ -60,7 +60,7 @@ $output = fopen('php://output', 'w');
 // Add BOM for Excel UTF-8 support
 fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-// Write headers based on type
+// headers based on type
 if ($type_filter === 'sms') {
     fputcsv($output, ['Date & Time', 'Phone Number', 'Message', 'Status', 'Created At']);
 
