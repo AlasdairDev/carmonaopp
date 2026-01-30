@@ -11,8 +11,8 @@ if (!isLoggedIn() || $_SESSION['role'] !== 'user') {
 
 $user_id = $_SESSION['user_id'];
 $user = getUserById($user_id);
-// Department guide will be loaded via AJAX - no static loading needed
-$departments_guide = []; // Empty array - will be populated via AJAX in the modal
+
+$departments_guide = []; 
 include '../includes/header.php';
 ?>
 
@@ -21,7 +21,6 @@ include '../includes/header.php';
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/user-responsive.css">
 
 <style>
-    /* Match the exact wrapper and banner styling from other pages */
     body {
         background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
         min-height: 100vh;
@@ -53,7 +52,6 @@ include '../includes/header.php';
     }
 
 
-    /* EXACT match from dashboard.php, applications.php, track.php */
     .dashboard-banner {
         background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
         border-radius: 30px;
@@ -63,7 +61,6 @@ include '../includes/header.php';
         position: relative;
         overflow: hidden;
         margin: 0 0 2rem 0;
-        /* Explicit margin control */
     }
 
 
@@ -82,7 +79,6 @@ include '../includes/header.php';
     }
 
 
-    /* Disable hover states on section cards */
     .section-card {
         transition: none !important;
     }
@@ -132,11 +128,8 @@ include '../includes/header.php';
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
-        /* Change from inline-block to inline-flex */
         align-items: center;
-        /* Add this */
         justify-content: center;
-        /* Add this */
     }
 
 
@@ -418,13 +411,11 @@ include '../includes/header.php';
 
     #howToApplyBox .widget-body {
         padding: 0.75rem;
-        /* Decrease padding */
     }
 
 
     #howToApplyBox .widget-body {
         padding: 0.5rem;
-        /* Decrease padding */
     }
 
 
@@ -898,7 +889,6 @@ include '../includes/header.php';
         display: block;
     }
 
-    < !--========================================REQUIRED CSS (Add to your <style> tag)========================================--><style>
 
     /* Modal Base */
     .modal {
@@ -1181,7 +1171,7 @@ include '../includes/header.php';
                                             <li>Accepted format: PDF only</li>
                                         </ul>
                                     </div>
-                                    <!-- NEW: Tutorial Help Box -->
+                                    <!-- Tutorial Help Box -->
                                     <div
                                         style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
                                         <div
@@ -1277,7 +1267,7 @@ include '../includes/header.php';
 </div>
 
 
-<!-- ✅ UPDATED MODAL WITH SEARCH -->
+<!-- MODAL WITH SEARCH -->
 <div id="deptGuideModal"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
     <div style="background:#fff; width:90%; max-width:650px; margin:80px auto; border-radius:8px; overflow:hidden;">
