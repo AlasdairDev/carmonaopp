@@ -17,7 +17,7 @@ $department_filter = isset($_GET['department_id']) ? $_GET['department_id'] : ''
 
 if (isDepartmentAdmin()) {
     $admin_dept_id = getAdminDepartmentId();
-    $department_filter = $admin_dept_id; // Force their department
+    $department_filter = $admin_dept_id; 
 }
 if (isDepartmentAdmin()) {
     $admin_dept_id = getAdminDepartmentId();
@@ -31,14 +31,13 @@ $departments = $departments_stmt->fetchAll();
 $where_conditions = ["DATE(a.created_at) BETWEEN ? AND ?"];
 $params = [$date_from, $date_to];
 
-// ✅ FIXED: Only add department filter ONCE
 if (!empty($department_filter)) {
     $where_conditions[] = "a.department_id = ?";
     $params[] = $department_filter;
 }
-// ✅ If no manual filter was applied, use role-based filter for dept admins
+
 elseif (!empty($dept_filter_where)) {
-    $where_conditions[] = trim($dept_filter_where, ' AND'); // Remove leading "AND"
+    $where_conditions[] = trim($dept_filter_where, ' AND'); 
     $params = array_merge($params, $dept_filter_params);
 }
 
@@ -79,7 +78,7 @@ $stmt->execute($params);
 $department_data = $stmt->fetchAll();
 
 // Daily applications
-// First, get the actual application dates
+// get the actual application dates
 $stmt = $pdo->prepare("
     SELECT DATE(a.created_at) as date, COUNT(*) as count
     FROM applications a
@@ -464,7 +463,7 @@ include '../includes/header.php';
             });
         }
 
-        // Service Chart (using departmentChart canvas)
+        // Service Chart
         const deptCtx = document.getElementById('departmentChart');
         if (deptCtx) {
             new Chart(deptCtx, {
@@ -480,7 +479,7 @@ include '../includes/header.php';
                     }]
                 },
                 options: {
-                    indexAxis: 'x',  // horizontal bars
+                    indexAxis: 'x',  
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
