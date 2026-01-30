@@ -328,13 +328,10 @@ include '../includes/header.php';
         background: linear-gradient(135deg, var(--primary) 0%, #9ccc65 100%);
         color: white;
         padding: 0.75rem 1.5rem;
-        /* Increased from 0.5rem 1rem */
         border-radius: 12px;
         font-weight: 700;
         font-size: 1.5rem;
-        /* Increased from 1.1rem */
         min-width: 60px;
-        /* Increased from 45px */
         text-align: center;
         box-shadow: 0 2px 8px rgba(124, 179, 66, 0.3);
     }
@@ -588,7 +585,7 @@ include '../includes/header.php';
         border-left: 4px solid #c62828;
     }
 
-    /* Toast Notification - Admin Style */
+    /* Toast Notification */
     .toast-notification {
         position: fixed;
         top: 100px;
@@ -1126,7 +1123,6 @@ include '../includes/header.php';
 
     // Handle notification click
     function handleNotificationClick(notifId, applicationId, isRead) {
-        // If already read, just redirect
         if (isRead === 1) {
             if (applicationId) {
                 window.location.href = 'view_application.php?id=' + applicationId;
