@@ -1,7 +1,7 @@
 <style>
 
 /* ============================================
-   STANDARD ADMIN PAGE LAYOUT - v1.0
+   STANDARD ADMIN PAGE LAYOUT 
    ============================================ */
 * {
     margin: 0;
@@ -110,7 +110,7 @@ body {
     z-index: 1;
 }
 
-/* Stats Grid - Compact Version */
+/* Stats Grid */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -132,10 +132,8 @@ body {
     border: 1px solid transparent;
     display: flex;
     align-items: center;
-    /* This centers items vertically */
     gap: 1rem;
     min-height: 100px;
-    /* Add minimum height for consistency */
 }
 
 
@@ -259,7 +257,6 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     display: inline-block;
-    /* Important for gradient text to work properly */
 }
 
 
@@ -309,7 +306,6 @@ body {
     padding: 1rem;
 }
 
-/* Modern Professional Button Design */
 .action-btn {
     display: flex;
     flex-direction: column;
