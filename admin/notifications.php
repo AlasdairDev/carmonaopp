@@ -15,7 +15,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
     if (isset($_POST['mark_all_read'])) {
         try {
             if (isDepartmentAdmin()) {
-                // Only mark notifications for applications in their department
+                // mark notifications for applications in their department
                 $stmt = $pdo->prepare("
                 UPDATE notifications n
                 INNER JOIN applications a ON n.application_id = a.id
@@ -38,7 +38,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
     if (isset($_POST['delete_all'])) {
         try {
             if (isDepartmentAdmin()) {
-                // Only delete notifications for applications in their department
+                // delete notifications for applications in their department
                 $stmt = $pdo->prepare("
                 DELETE n FROM notifications n
                 INNER JOIN applications a ON n.application_id = a.id
@@ -103,13 +103,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
             $where[] = "n.is_read = ?";
             $params[] = $read_filter === 'read' ? 1 : 0;
         }
-        // ADD DEPARTMENT FILTERING
+        // DEPARTMENT FILTERING
         if (isDepartmentAdmin()) {
             $where[] = "a.department_id = ?";
             $params[] = $_SESSION['department_id'];
         }
         if ($user_filter) {
-            $where[] = "a.user_id = ?";  // ✅ CORRECT
+            $where[] = "a.user_id = ?"; 
             $params[] = $user_filter;
         }
 
@@ -213,7 +213,6 @@ if (isDepartmentAdmin()) {
         ORDER BY u.name
     ")->fetchAll(PDO::FETCH_ASSOC);
 }
-// Around line 100, after getting the $users array, add thi
 
 $types = [
     'new_application',
@@ -362,7 +361,6 @@ include '../includes/header.php';
 
         <!-- Pagination -->
         <div class="pagination" id="paginationContainer">
-            <!-- Pagination will be loaded here via AJAX -->
         </div>
     </div>
 
@@ -713,26 +711,25 @@ include '../includes/header.php';
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Ultra-fast auto-refresh (every 500ms = 0.5 seconds)
+        // fast auto-refresh
         function startAutoRefresh() {
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
             }
 
-            // Check for new notifications every 500 milliseconds
+            // Check for new notifications 
             autoRefreshInterval = setInterval(function () {
                 loadNotificationsPage(currentPage, true);
-            }, 500); // 500ms = half a second
+            }, 500); 
         }
 
-        // Start when page loads
         // Start when page loads
         document.addEventListener('DOMContentLoaded', function () {
             loadNotificationsPage(1, true);
             startAutoRefresh();
             console.log('✅ Auto-refresh enabled (checking every 0.5 seconds)');
 
-            // Add event listeners to filter dropdowns
+            // event listeners to filter dropdowns
             document.getElementById('filter-user').addEventListener('change', function () {
                 loadNotificationsPage(1);
             });
