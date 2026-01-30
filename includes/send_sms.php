@@ -3,9 +3,6 @@ require_once __DIR__ . '/../config.php';
 
 /**
  * Send SMS via Semaphore API
- * @param string $phoneNumber Philippine mobile number
- * @param string $message SMS content (max 160 chars for single SMS)
- * @return bool Success status
  */
 function sendSMS($phoneNumber, $message, $user_id = null, $application_id = null, $department_id = null)
 {
@@ -21,7 +18,7 @@ function sendSMS($phoneNumber, $message, $user_id = null, $application_id = null
     if (!defined('SEMAPHORE_API_KEY')) {
         error_log("SEMAPHORE_API_KEY constant not defined");
         logSMS($phoneNumber, $message, 'failed', 'API key not configured', $user_id, $application_id, $department_id);
-        return false;  // ✅ ADD THIS
+        return false; 
     }
 
     if (
@@ -64,7 +61,7 @@ function sendSMS($phoneNumber, $message, $user_id = null, $application_id = null
         CURLOPT_POST => 1,
         CURLOPT_POSTFIELDS => http_build_query($parameters),
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_SSL_VERIFYPEER => true, // Enable SSL verification for production
+        CURLOPT_SSL_VERIFYPEER => true, 
         CURLOPT_TIMEOUT => 30,
         CURLOPT_CONNECTTIMEOUT => 10
     ]);
@@ -73,7 +70,6 @@ function sendSMS($phoneNumber, $message, $user_id = null, $application_id = null
     $output = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-    // Check for cURL errors
     if (curl_errno($ch)) {
         $error = curl_error($ch);
         curl_close($ch);
@@ -123,8 +119,6 @@ function sendSMS($phoneNumber, $message, $user_id = null, $application_id = null
 
 /**
  * Format phone number to 09XXXXXXXXX format
- * @param string $phone Input phone number
- * @return string|false Formatted number or false if invalid
  */
 function formatPhoneNumberForSMS($phone)
 {
@@ -152,10 +146,6 @@ function formatPhoneNumberForSMS($phone)
 
 /**
  * Log SMS to database
- * @param string $phoneNumber Recipient phone
- * @param string $message SMS content
- * @param string $status sent|failed|pending
- * @param string|null $error Error message if failed
  */
 function logSMS($phoneNumber, $message, $status, $error = null, $user_id = null, $application_id = null, $department_id = null)
 {
@@ -182,9 +172,6 @@ function logSMS($phoneNumber, $message, $status, $error = null, $user_id = null,
 
 /**
  * Get SMS template for application status updates
- * @param array $application Application data
- * @param string $status New status
- * @return string SMS message
  */
 function getSMSTemplate($application, $status)
 {
@@ -204,9 +191,6 @@ function getSMSTemplate($application, $status)
 
 /**
  * Send bulk SMS notifications
- * @param array $recipients Array of phone numbers
- * @param string $message SMS content
- * @return array Results ['sent' => count, 'failed' => count]
  */
 function sendBulkSMS($recipients, $message)
 {
@@ -219,7 +203,6 @@ function sendBulkSMS($recipients, $message)
             $results['failed']++;
         }
 
-        // Rate limiting: wait 1 second between sends to avoid API limits
         sleep(1);
     }
 
