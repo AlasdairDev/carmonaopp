@@ -1,7 +1,4 @@
 <?php
-// FILE: api/submit_department_application.php
-// FIXED VERSION - Uses PDO instead of MySQLi
-
 
 // Error handling
 ini_set('display_errors', 0);
@@ -281,8 +278,8 @@ try {
             $user_id,
             'Submit Application',
             "Submitted application: {$tracking_number} for {$service['service_name']}",
-            null,  // details
-            $department_id  // ADD THIS - the department where the application was submitted
+            null,  
+            $department_id  
         );
 
         // Commit transaction
