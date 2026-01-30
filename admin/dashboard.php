@@ -111,7 +111,6 @@ include '../includes/header.php';
 
 <div class="dashboard-container">
     <!-- Header -->
-    <!-- Header -->
     <div class="dashboard-header animate__animated animate__fadeInDown">
         <h1>
             <?php if (isSuperAdmin()): ?>
@@ -236,7 +235,7 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <!-- Management Tools - Full Width Section -->
+    <!-- Management Tools -->
     <div class="management-tools-section">
         <div class="card">
             <div class="card-header">
