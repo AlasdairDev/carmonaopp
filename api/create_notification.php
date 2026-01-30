@@ -1,7 +1,6 @@
 <?php
 /**
- * Create Notification API
- * Enhanced with Email & SMS support
+ * Create Notification API with Email & SMS support
  */
 
 require_once __DIR__ . '/../config.php';
