@@ -463,7 +463,6 @@ include '../includes/header.php';
 
                 container.innerHTML = html;
             } catch (e) {
-                // If it's not JSON, display as plain text in a single card
                 container.innerHTML = `
             <div class="detail-item">
                 <div class="detail-label">
@@ -499,7 +498,6 @@ include '../includes/header.php';
             document.getElementById('clearDateFrom').setAttribute('max', today);
             document.getElementById('clearDateTo').setAttribute('max', today);
 
-            // Clear any previous values
             document.getElementById('clearDateFrom').value = '';
             document.getElementById('clearDateTo').value = '';
 
