@@ -1,5 +1,3 @@
-// FILE: assets/js/apply-form.js
-// Enhanced version with real-time AJAX updates similar to applications.php
 
 // Global variables for tracking current selections
 let currentDepartmentValue = '';
@@ -10,12 +8,11 @@ let serviceRefreshInterval;
 document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ Apply form script loaded');
 
-    // CRITICAL FIX: Only run if we're on the application page
     const applicationForm = document.getElementById('applicationForm');
 
     if (!applicationForm) {
         console.log('ℹ️ Application form not found - skipping apply-form.js');
-        return; // EXIT - Don't run any of this code on other pages!
+        return;
     }
 
     console.log('✅ Application form found - initializing with AJAX');
@@ -151,10 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ Apply form script fully initialized with AJAX');
 });
 
-/**
- * Load departments from API with automatic refresh capability
- * @param {boolean} silent - If true, don't show loading states (for background refresh)
- */
 async function loadDepartments(silent = false) {
     const departmentSelect = document.getElementById('department_select');
 
@@ -228,11 +221,7 @@ async function loadDepartments(silent = false) {
     }
 }
 
-/**
- * Load services for selected department with automatic refresh capability
- * @param {string|number} departmentId - The department ID
- * @param {boolean} silent - If true, don't show loading states (for background refresh)
- */
+
 async function loadServices(departmentId, silent = false) {
     const serviceSelect = document.getElementById('service_select');
     const requirementsBox = document.getElementById('requirementsBox');
