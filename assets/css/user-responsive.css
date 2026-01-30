@@ -1,18 +1,9 @@
 /* ===============================================
    USER PAGES RESPONSIVE STYLES
-   Mobile First Approach
-   Breakpoints:
-   - Mobile: 320px - 767px
-   - Tablet: 768px - 1023px
-   - Laptop: 1024px - 1439px
-   - Desktop: 1440px+
+   Mobile
 =============================================== */
 
-/* ========== MOBILE FIXES - Add to user-responsive.css ========== */
-/* Replace or update the existing mobile section (max-width: 767px) */
-
 @media screen and (max-width: 767px) {
-    /* Body & Wrapper - UPDATED */
     body {
         padding: 0 !important;
         overflow-x: hidden;
@@ -38,7 +29,7 @@
         margin: 0 auto;
     }
 
-    /* Dashboard Banner - UPDATED */
+    /* Dashboard Banner */
     .dashboard-banner {
         padding: 1.5rem 1rem !important;
         margin: 0 0 1rem 0 !important;
@@ -59,7 +50,7 @@
         margin: 0 !important;
     }
 
-    /* Quick Actions Grid - UPDATED */
+    /* Quick Actions Grid */
     .quick-actions {
         grid-template-columns: 1fr !important;
         gap: 1rem !important;
@@ -92,7 +83,7 @@
         margin: 0 !important;
     }
 
-    /* Stats Grid - UPDATED */
+    /* Stats Grid */
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.75rem !important;
@@ -113,7 +104,7 @@
         font-size: 1.75rem !important;
     }
 
-    /* Cards - UPDATED */
+    /* Cards */
     .card,
     .compact-card,
     .applications-card {
@@ -140,7 +131,7 @@
         padding: 1rem !important;
     }
 
-    /* Empty State - UPDATED */
+    /* Empty State */
     .empty-state {
         padding: 2rem 1rem !important;
         text-align: center;
@@ -178,7 +169,7 @@
         display: inline-block !important;
     }
 
-    /* Application Items - UPDATED */
+    /* Application Items */
     .application-item {
         padding: 1rem !important;
         margin-bottom: 0.75rem !important;
@@ -248,7 +239,7 @@
         font-size: 0.9rem !important;
     }
 
-    /* Filter Section - UPDATED */
+    /* Filter Section */
     .filter-section {
         padding: 1rem !important;
         margin-bottom: 1rem !important;
@@ -268,7 +259,7 @@
         text-align: center;
     }
 
-    /* Pagination - UPDATED */
+    /* Pagination */
     .pagination {
         gap: 0.25rem !important;
         flex-wrap: wrap;
@@ -282,7 +273,7 @@
         min-width: 35px;
     }
 
-    /* Buttons - UPDATED */
+    /* Buttons */
     .btn,
     .btn-primary,
     .btn-secondary {
@@ -291,7 +282,7 @@
         border-radius: 20px !important;
     }
 
-    /* Tables - UPDATED */
+    /* Tables */
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -309,13 +300,13 @@
         font-size: 0.85rem !important;
     }
 
-    /* Fix scrolling issues */
-    * {
+    
+    {
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
     }
 
-    /* Prevent horizontal overflow */
+    
     html,
     body {
         overflow-x: hidden !important;
@@ -377,7 +368,7 @@
         min-height: 400px !important;
         padding: 3rem 1.5rem !important;
     }
-/* NAVBAR FIXES FOR TABLET */
+/* NAVBAR FOR TABLET */
     .navbar {
         padding: 1rem 1.5rem !important;
     }
@@ -737,5 +728,4 @@
 
 /* ========== DARK MODE SUPPORT (Optional) ========== */
 @media (prefers-color-scheme: dark) {
-    /* Add dark mode styles here if needed in the future */
 }
