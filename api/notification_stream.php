@@ -1,13 +1,12 @@
 <?php
-// CRITICAL: Add these at the very top
+
 set_time_limit(30);
 ini_set('max_execution_time', 30);
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 header('Connection: keep-alive');
-header('X-Accel-Buffering: no'); // Disable nginx buffering
+header('X-Accel-Buffering: no'); 
 
-// Flush output immediately
 ob_end_flush();
 flush();
 
@@ -40,7 +39,7 @@ while (time() - $last_check < 25) {
         $stats_stmt->execute([$user_id]);
         $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Get recent notifications (limited, non-blocking)
+        // Get recent notifications 
         $notif_stmt = $pdo->prepare("SELECT n.*, 
             a.tracking_number,
             applicant.name as applicant_name
