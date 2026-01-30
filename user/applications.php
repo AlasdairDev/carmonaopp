@@ -104,7 +104,6 @@ include '../includes/header.php';
 
 
     body {
-        /* Keep the dark green gradient on the body */
         background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
         min-height: 100vh;
         box-sizing: border-box;
@@ -165,7 +164,6 @@ include '../includes/header.php';
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        /* Force 4 columns */
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -216,7 +214,6 @@ include '../includes/header.php';
         gap: 1rem;
         flex-wrap: wrap;
         justify-content: center;
-        /* Add this line */
     }
 
 
