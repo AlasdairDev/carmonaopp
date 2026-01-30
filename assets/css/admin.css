@@ -94,7 +94,7 @@ body {
 }
 
 /* ============================================
-   🎯 NAVIGATION - 
+   NAVIGATION - 
    ============================================ */
 .navbar,
 .main-header,
@@ -241,7 +241,7 @@ header {
 }
 
 /* ============================================
-   👤 USER DROPDOWN - 
+   USER DROPDOWN - 
    ============================================ */
 
 /* User Dropdown Container */
@@ -347,7 +347,7 @@ header {
 }
 
 /* ============================================
-   🎨 HERO SECTION - 
+   HERO SECTION - 
    ============================================ */
 .hero-section,
 .welcome-banner,
@@ -365,7 +365,6 @@ header {
   animation: fadeIn 0.8s ease;
 }
 
-/* Floating decorative circles */
 .hero-section::before {
   content: '';
   position: absolute;
@@ -472,7 +471,7 @@ header {
 }
 
 /* ============================================
-   📊 HOW IT WORKS SECTION - 
+   HOW IT WORKS SECTION - 
    ============================================ */
 .how-it-works,
 .features-section,
@@ -548,7 +547,7 @@ header {
 }
 
 /* ============================================
-   📋 ADMIN DASHBOARD - 
+   ADMIN DASHBOARD - 
    ============================================ */
 .dashboard-container,
 .admin-container,
@@ -641,7 +640,7 @@ header {
 }
 
 /* ============================================
-   📄 CONTENT SECTIONS - 
+   CONTENT SECTIONS - 
    ============================================ */
 .content-section,
 .dashboard-section,
@@ -686,7 +685,7 @@ header {
 }
 
 /* ============================================
-   🎯 BUTTONS - STUNNING DESIGNS
+   BUTTONS 
    ============================================ */
 .btn,
 button,
@@ -730,7 +729,7 @@ button,
 }
 
 /* ============================================
-   📝 FORMS - 
+   FORMS - 
    ============================================ */
 .form-group,
 .form-field {
@@ -776,7 +775,7 @@ textarea:focus {
 }
 
 /* ============================================
-   📊 TABLES - 
+   TABLES - 
    ============================================ */
 .data-table,
 table {
@@ -860,7 +859,7 @@ table tbody tr:hover {
 }
 
 /* ============================================
-   🌈 FOOTER - 
+   FOOTER - 
    ============================================ */
 .footer,
 .site-footer {
@@ -910,7 +909,7 @@ table tbody tr:hover {
 }
 
 /* ============================================
-   📱 RESPONSIVE DESIGN
+   RESPONSIVE DESIGN
    ============================================ */
 @media (max-width: 1024px) {
   .stats-grid {
