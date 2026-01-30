@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($action === 'update_service') {
                 $id = (int) $_POST['service_id'];
                 $name = sanitizeInput($_POST['service_name']);
-                // Remove the $code line - keep existing code in database
+                // keep existing code in database
 
                 $stmt = $pdo->prepare("UPDATE services SET service_name = ?, description = ?, requirements = ?, processing_days = ?, base_fee = ?, updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$name, $description, $requirements, $processing_days, $base_fee, $id]);
@@ -630,7 +630,7 @@ include '../includes/header.php';
                             showToast('Service deleted successfully!', 'success');
                             setTimeout(() => {
                                 reloadTableData('services');
-                                reloadTableData('departments'); // ADD THIS LINE
+                                reloadTableData('departments');
                             }, 500);
                         })
                         .catch(error => {
