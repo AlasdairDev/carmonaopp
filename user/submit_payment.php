@@ -860,8 +860,6 @@ include '../includes/header.php';
             submitBtn.innerHTML = 'Submit Payment Proof';
         }
 
-        // Optionally refresh the page to show updated status
-        // location.reload();
     }
     document.getElementById('paymentForm').addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -897,7 +895,7 @@ include '../includes/header.php';
 
             if (data.success) {
                 showModal(data.message, 'success');
-                // Modal closeModal() function will redirect
+              
             } else {
                 showModal('Error: ' + data.message, 'error');
                 submitBtn.disabled = false;
@@ -910,8 +908,7 @@ include '../includes/header.php';
             submitBtn.innerHTML = 'Submit Payment Proof';
         }
     });
-    // Replace your existing alert with:
-    // showModal('✓ Payment proof submitted successfully! Your application status has been changed to PAID and is now under verification.', 'success');
+   
 </script>
 
 <?php include '../includes/footer.php'; ?>
