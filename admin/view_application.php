@@ -609,7 +609,7 @@ Upload screenshot as proof after payment</textarea>
                             'Pending': '#ff9800',
                             'Processing': '#2196F3',
                             'Approved': '#4CAF50',
-                            'Rejected': '#f44336',  // Add this line
+                            'Rejected': '#f44336',  
                             'Completed': '#4CAF50',
                             'Cancelled': '#9e9e9e'
                         };
@@ -617,7 +617,7 @@ Upload screenshot as proof after payment</textarea>
                             'Pending': 'fa-clock',
                             'Processing': 'fa-spinner',
                             'Approved': 'fa-check-circle',
-                            'Rejected': 'fa-times-circle',  // Add this line,
+                            'Rejected': 'fa-times-circle',  
                             'Completed': 'fa-check-double',
                             'Cancelled': 'fa-ban'
                         };
