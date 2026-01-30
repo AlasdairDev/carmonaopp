@@ -1,8 +1,4 @@
 <?php
-/**
- * LGU Permit Tracking System - Helper Functions
- * Note: Basic functions like isLoggedIn(), isAdmin(), etc. are in config.php
- */
 
 // Load mailer helper
 require_once __DIR__ . '/send_email.php';
@@ -22,7 +18,7 @@ function getCurrentUserRole() {
     return $_SESSION['user_role'] ?? 'user';
 }
 
-// Sanitize input (alias for compatibility)
+// Sanitize input 
 function sanitize($data) {
     return sanitizeInput($data);
 }
