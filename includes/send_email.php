@@ -11,11 +11,6 @@ use PHPMailer\PHPMailer\Exception;
 
 /**
  * Send email using PHPMailer
- * @param string $to Recipient email
- * @param string $subject Email subject
- * @param string $body HTML body
- * @param string $altBody Plain text alternative
- * @return bool Success status
  */
 function sendEmail($to, $subject, $body, $altBody = '', $user_id = null, $application_id = null, $department_id = null)
 {
@@ -108,9 +103,6 @@ function logEmailStatus($recipient, $subject, $status, $error = null, $user_id =
 
 /**
  * Get email template for application status
- * @param array $application Application data with tracking_number, service_name, etc.
- * @param string $status New status (Processing, Approved, Rejected, Completed)
- * @return array|null Template with 'subject' and 'body' keys
  */
 function getApplicationStatusEmailTemplate($application, $status)
 {
@@ -414,9 +406,6 @@ function getStyledEmailTemplate($title, $content, $accentColor = '#4CAF50')
     ";
 }
 
-/**
- * Adjust color brightness for gradient effect
- */
 function adjustColor($hex, $percent)
 {
     $hex = str_replace('#', '', $hex);
