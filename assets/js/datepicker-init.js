@@ -1,7 +1,3 @@
-/**
- * Date Picker Initialization
- * Reusable date picker configuration with MM/DD/YYYY format
- */
 
 // Default date picker configuration
 const datePickerConfig = {
