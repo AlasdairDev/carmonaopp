@@ -1,7 +1,7 @@
 <style>
 
 /* ============================================
-   STANDARD ADMIN PAGE LAYOUT - v1.0
+   STANDARD ADMIN PAGE LAYOUT 
    ============================================ */
 * {
     margin: 0;
@@ -75,7 +75,6 @@ body {
     color: white;
     margin-bottom: 1.5rem;
     margin-top: 0;
-    /* ADD THIS */
     box-shadow: var(--shadow-lg);
     display: flex;
     justify-content: space-between;
@@ -582,7 +581,6 @@ tbody tr:hover {
 
 .modal-header {
     display: none;
-    /* Hide the header with X button */
 }
 
 .modal-body {
