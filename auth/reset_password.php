@@ -1,7 +1,7 @@
 <?php
-require_once '../config.php';  // FIXED: Correct path from /auth/
-require_once '../includes/functions.php';  // FIXED: Correct path
-require_once '../includes/security.php';  // FIXED: Correct path
+require_once '../config.php';  
+require_once '../includes/functions.php';  
+require_once '../includes/security.php';  
 
 $error = '';
 $success = '';
