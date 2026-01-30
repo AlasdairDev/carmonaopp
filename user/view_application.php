@@ -226,7 +226,7 @@ include '../includes/header.php';
         color: white;
     }
 
-    /* Solid colors ONLY for status badge in page header */
+    /* Solid colors for status badge in page header */
     .page-header .status-badge.status-pending {
         background: #ff6b35;
         color: white;
