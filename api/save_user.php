@@ -21,7 +21,7 @@ $phone = isset($_POST['mobile']) ? trim($_POST['mobile']) : '';
 $address = isset($_POST['address']) ? trim($_POST['address']) : '';
 $role = isset($_POST['role']) ? trim($_POST['role']) : 'user';
 $password = isset($_POST['password']) ? trim($_POST['password']) : '';
-// ✅ ADD THIS - Get department_id from POST
+
 $department_id = isset($_POST['department_id']) ? (int) $_POST['department_id'] : null;
 
 // Validation
@@ -35,13 +35,13 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit();
 }
 
-// ✅ UPDATE THIS - Add department_admin to valid roles
+// department_admin
 if (!in_array($role, ['user', 'admin', 'department_admin', 'superadmin'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid role']);
     exit();
 }
 
-// ✅ ADD THIS - Validate department for department_admin
+// Validate department for department_admin
 if ($role === 'department_admin' && empty($department_id)) {
     echo json_encode(['success' => false, 'message' => 'Department is required for Department Admin role']);
     exit();
@@ -73,7 +73,7 @@ try {
     }
 
     if ($user_id > 0) {
-        // ✅ UPDATE - Update existing user WITH department_id
+        // Update existing user WITH department_id
         if (!empty($password)) {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("
@@ -99,7 +99,7 @@ try {
             'user_id' => $user_id
         ]);
     } else {
-        // ✅ UPDATE - Create new user WITH department_id
+        // Create new user WITH department_id
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("
             INSERT INTO users (name, email, mobile, address, password, role, department_id, is_active, is_verified, created_at)
