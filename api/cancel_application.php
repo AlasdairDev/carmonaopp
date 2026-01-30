@@ -48,7 +48,7 @@ try {
         exit();
     }
 
-    // ✅ FIXED: Update application status to cancelled AND clear payment requirements
+    // Update application status to cancelled AND clear payment requirements
     $update_query = "UPDATE applications 
                      SET status = 'cancelled', 
                          payment_required = 0,
@@ -86,7 +86,7 @@ try {
         'Cancel Application',
         "Cancelled application {$application['tracking_number']}. Reason: {$cancellation_reason}",
         ['application_id' => $application_id, 'reason' => $cancellation_reason],
-        $application['department_id']  // ADD THIS
+        $application['department_id'] 
     );
 
     echo json_encode(['success' => true, 'message' => 'Application cancelled successfully']);
