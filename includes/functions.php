@@ -80,8 +80,6 @@ function deleteFile($file_path) {
     return false;
 }
 
-// NOTE: sendEmail() is now in includes/send_email.php and uses PHPMailer
-// NOTE: sendSMS() is now in includes/send_sms.php and uses Semaphore API
 
 // Create notification
 function createNotification($pdo, $user_id, $title, $message, $type = 'info', $application_id = null) {
