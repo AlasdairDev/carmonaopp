@@ -1,5 +1,5 @@
 /* ============================================
-   ADMIN PAGES RESPONSIVE STYLES - v1.0
+   ADMIN PAGES RESPONSIVE STYLES 
    Mobile, Tablet, and Laptop Optimization
    ============================================ */
 
@@ -415,7 +415,7 @@
     }
 
     .form-control {
-        font-size: 16px !important; /* Prevents zoom on iOS */
+        font-size: 16px !important; 
     }
 
     /* Tabs */
@@ -575,7 +575,7 @@
         grid-template-columns: 1fr !important;
     }
 
-    /* Chart Card - Fix legend positioning */
+    /* Chart Card  */
     .chart-card {
         display: flex !important;
         flex-direction: column !important;
@@ -785,7 +785,7 @@
     }
 }
 
-/* Reduced motion for users who prefer it */
+/* Reduced motion  */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
