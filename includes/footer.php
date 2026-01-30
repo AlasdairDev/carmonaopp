@@ -5,7 +5,7 @@
     <div class="container">
         <!-- Footer Bottom -->
         <div style="text-align: center;">
-            <!-- Footer content removed -->
+           
         </div>
     </div>
 </footer>
