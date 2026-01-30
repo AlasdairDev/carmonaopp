@@ -2,7 +2,6 @@
 /**
  * API: Verify or Reject Payment
  * Admin endpoint to verify or reject submitted payments
- * Status remains "Paid" after verification (already changed when user submitted)
  */
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -96,8 +95,8 @@ try {
             $admin_id,
             'Verify Payment',
             "Verified payment for application {$app['tracking_number']}",
-            null,  // details
-            $app['department_id']  // ADD THIS
+            null,  
+            $app['department_id'] 
         );
         $pdo->commit();
 
@@ -281,10 +280,10 @@ try {
             $admin_id,
             'Reject Payment',
             "Rejected payment for application {$app['tracking_number']} - Status reverted to Approved",
-            null,  // details
-            $app['department_id']  // ADD THIS
+            null,  
+            $app['department_id']  
         );
-        // Delete old payment proof file
+       
         if (!empty($app['payment_proof'])) {
             $file_path = __DIR__ . '/../' . $app['payment_proof'];
             if (file_exists($file_path)) {
