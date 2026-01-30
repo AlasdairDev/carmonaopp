@@ -1,7 +1,6 @@
 <?php
 
 
-// Show PHP errors (IMPORTANT for debugging)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -36,9 +35,6 @@ if (!defined('SITE_NAME')) {
     <link rel="icon" type="image/png" href="./assets/favicon.png">
 
     <style>
-        /* ================================
-           GREEN THEMED LANDING PAGE
-           ================================ */
 
 
         * {
