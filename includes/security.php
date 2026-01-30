@@ -1,8 +1,8 @@
 <?php
 /**
- * Security Functions for LGU Permit Tracking System
+ * Security Functions 
  * Includes CSRF protection, rate limiting, security logging, and RBAC
- * UPDATED WITH ROLE-BASED ACCESS CONTROL
+ * WITH ROLE-BASED ACCESS CONTROL
  */
 
 // Ensure session is started
@@ -12,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 /**
  * ============================================
- * RBAC FUNCTIONS (NEW)
+ * RBAC FUNCTIONS
  * ============================================
  */
 
@@ -224,9 +224,7 @@ function regenerate_session() {
 }
 
 /**
- * Sanitize Input
- * Clean user input to prevent XSS
- * 
+ 
  * @param string $data The data to sanitize
  * @return string Sanitized data
  */
@@ -239,11 +237,6 @@ function sanitize_input($data) {
 
 /**
  * Verify Password
- * Wrapper for password_verify
- * 
- * @param string $password Plain text password
- * @param string $hash Hashed password
- * @return bool True if password matches
  */
 function verify_password($password, $hash) {
     return password_verify($password, $hash);
@@ -251,10 +244,7 @@ function verify_password($password, $hash) {
 
 /**
  * Hash Password
- * Wrapper for password_hash
- * 
- * @param string $password Plain text password
- * @return string Hashed password
+
  */
 function hash_password($password) {
     return password_hash($password, PASSWORD_DEFAULT);
@@ -264,10 +254,7 @@ function hash_password($password) {
  * Check Rate Limit
  * Prevents brute force attacks by limiting login attempts
  * 
- * @param string $identifier Email or IP address
- * @param int $max_attempts Maximum attempts allowed (default: 5)
- * @param int $lockout_time Lockout duration in seconds (default: 900 = 15 min)
- * @return array ['allowed' => bool, 'attempts' => int, 'time_remaining' => int]
+
  */
 function check_rate_limit($identifier, $max_attempts = 5, $lockout_time = 900) {
     if (!isset($_SESSION['login_attempts'])) {
@@ -330,8 +317,7 @@ function check_rate_limit($identifier, $max_attempts = 5, $lockout_time = 900) {
 /**
  * Clear Rate Limit
  * Removes rate limit for a specific identifier (call on successful login)
- * 
- * @param string $identifier Email or IP address
+
  */
 function clear_rate_limit($identifier) {
     if (isset($_SESSION['login_attempts'])) {
@@ -343,10 +329,6 @@ function clear_rate_limit($identifier) {
 /**
  * Log Security Event
  * Logs security-related events to database
- * 
- * @param string $event_type Type of security event
- * @param string $description Event description
- * @param array $additional_data Optional additional data
  */
 function log_security_event($event_type, $description, $additional_data = []) {
     global $pdo;
@@ -388,10 +370,7 @@ function log_security_event($event_type, $description, $additional_data = []) {
 /**
  * Validate Password Strength
  * Checks if password meets minimum security requirements
- * 
- * @param string $password The password to validate
- * @param int $min_length Minimum length (default: 8)
- * @return array ['valid' => bool, 'errors' => array]
+
  */
 function validate_password_strength($password, $min_length = 8) {
     $errors = [];
@@ -412,10 +391,6 @@ function validate_password_strength($password, $min_length = 8) {
         $errors[] = "Password must contain at least one number";
     }
     
-    // Optional: Special character requirement (commented out for flexibility)
-    // if (!preg_match('/[^A-Za-z0-9]/', $password)) {
-    //     $errors[] = "Password must contain at least one special character";
-    // }
     
     return [
         'valid' => empty($errors),
@@ -434,16 +409,12 @@ function isStrongPassword($password) {
 /**
  * Check Session Timeout
  * Validates if user session has expired
- * 
- * @param int $timeout Timeout duration in seconds (default: 3600 = 1 hour)
- * @return bool True if session is still valid
  */
 function check_session_timeout($timeout = 3600) {
     if (isset($_SESSION['last_activity'])) {
         $elapsed = time() - $_SESSION['last_activity'];
         
         if ($elapsed > $timeout) {
-            // Session expired
             session_destroy();
             return false;
         }
@@ -456,9 +427,6 @@ function check_session_timeout($timeout = 3600) {
 
 /**
  * Validate Email Format
- * 
- * @param string $email Email address to validate
- * @return bool True if valid email format
  */
 function validate_email($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
@@ -466,11 +434,7 @@ function validate_email($email) {
 
 /**
  * Prevent SQL Injection
- * Wrapper for prepared statement parameter binding
- * This is just a reminder to always use prepared statements
- * 
- * @param string $input User input
- * @return string Escaped input (for display purposes only - always use prepared statements!)
+ * Wrapper for prepared statement parameter
  */
 function escape_sql($input) {
     global $pdo;
@@ -483,9 +447,6 @@ function escape_sql($input) {
 /**
  * Generate Secure Random Token
  * For password resets, API keys, etc.
- * 
- * @param int $length Token length (default: 32)
- * @return string Random token
  */
 function generate_secure_token($length = 32) {
     return bin2hex(random_bytes($length));
@@ -493,14 +454,10 @@ function generate_secure_token($length = 32) {
 
 /**
  * Check if IP is Whitelisted
- * Useful for restricting admin access to specific IPs
- * 
- * @param array $whitelist Array of allowed IP addresses
- * @return bool True if current IP is whitelisted
  */
 function check_ip_whitelist($whitelist = []) {
     if (empty($whitelist)) {
-        return true; // No whitelist = allow all
+        return true; 
     }
     
     $current_ip = $_SERVER['REMOTE_ADDR'] ?? '';
@@ -508,11 +465,7 @@ function check_ip_whitelist($whitelist = []) {
 }
 
 /**
- * Sanitize Filename
  * Remove dangerous characters from filenames
- * 
- * @param string $filename Original filename
- * @return string Sanitized filename
  */
 function sanitize_filename($filename) {
     // Remove path components
@@ -530,15 +483,12 @@ function sanitize_filename($filename) {
 /**
  * Detect XSS Attempts
  * Basic XSS detection (use in addition to sanitization)
- * 
- * @param string $input User input to check
- * @return bool True if potential XSS detected
  */
 function detect_xss($input) {
     $dangerous_patterns = [
         '/<script\b[^>]*>(.*?)<\/script>/is',
         '/javascript:/i',
-        '/on\w+\s*=/i', // onclick, onload, etc.
+        '/on\w+\s*=/i', 
         '/<iframe/i',
         '/<object/i',
         '/<embed/i',
@@ -556,9 +506,6 @@ function detect_xss($input) {
 /**
  * Log Failed Login Attempt
  * Convenience function for logging failed logins
- * 
- * @param string $email Email used in attempt
- * @param string $reason Reason for failure
  */
 function log_failed_login($email, $reason = 'Invalid credentials') {
     log_security_event('LOGIN_FAILURE', "Invalid password for: {$email}", [
@@ -570,9 +517,6 @@ function log_failed_login($email, $reason = 'Invalid credentials') {
 /**
  * Log Successful Login
  * Convenience function for logging successful logins
- * 
- * @param int $user_id User ID
- * @param string $email Email used
  */
 function log_successful_login($user_id, $email) {
     log_security_event('LOGIN_SUCCESS', "User ID: {$user_id}, Email: {$email}", [
@@ -584,9 +528,6 @@ function log_successful_login($user_id, $email) {
 /**
  * Check if User is Locked Out
  * Quick check without incrementing counter
- * 
- * @param string $identifier Email or IP
- * @return bool True if locked out
  */
 function is_locked_out($identifier) {
     if (!isset($_SESSION['login_attempts'][$identifier])) {
