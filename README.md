@@ -17,7 +17,8 @@ The portal is developed using a reliable, industry-standard stack optimized for 
 * **Front-End Technologies**: **HTML and CSS** are used for a government-branded interface with responsive layouts, while **JavaScript** handles frontend form validation and dynamic UI updates.
 * **Back-End Technologies**: **PHP** serves as the core server-side language for business logic and database communication. **MariaDB (MySQL)** is used to organize complex data, including status history, user credentials, and audit logs.
 * **Development Tools**: **XAMPP** was utilized as the primary local development and testing environment.
-* **Libraries and APIs**:
+  
+**Libraries and APIs**:
 * **PHPMailer**: Integrated to manage automated email notifications for milestones and password resets.
 * **TCPDF/FPDF**: Utilized for the automated generation of official, downloadable PDF reports and permit documents.
 * **Semaphore API**: Connected via a dedicated API (`send_sms.php`) to send real-time mobile alerts to applicants.
