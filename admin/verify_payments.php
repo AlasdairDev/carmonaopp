@@ -1,19 +1,19 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once '../includes/functions.php';
-require_once '../includes/security.php';  // ✅ ADD THIS
+require_once '../includes/security.php';  
 
 if (!isLoggedIn() || !isAdmin()) {
     header('Location: ../login.php');
     exit();
 }
 
-// ✅ Get department filter properly
+// Get department filter
 $dept_filter_data = getDepartmentFilter('a');
 $dept_where = $dept_filter_data['where'] ? ' AND ' . $dept_filter_data['where'] : '';
 $dept_params = $dept_filter_data['params'];
 
-// ✅ Stats query with department filter
+// Stats query with department filter
 $stats_query = "SELECT 
     COUNT(*) as total_payments,
     SUM(CASE WHEN payment_status = 'submitted' THEN 1 ELSE 0 END) as pending_verification,
@@ -31,7 +31,7 @@ if (!empty($dept_params)) {
     $stats = $pdo->query($stats_query)->fetch();
 }
 
-// ✅ Applications query with department filter
+// Applications query with department filter
 $query = "
     SELECT a.*, 
            u.name as applicant_name,
@@ -78,7 +78,7 @@ include '../includes/header.php';
     <link rel="stylesheet" href="../assets/css/admin/verify_payments_syles.css">
     <style>
         /* ============================================
-   STANDARD ADMIN PAGE LAYOUT - v1.0
+   STANDARD ADMIN PAGE LAYOUT - 
    ============================================ */
         * {
             margin: 0;
@@ -608,7 +608,7 @@ include '../includes/header.php';
             gap: 0.75rem;
             margin-top: 1.5rem;
             align-items: center;
-            /* Add this */
+    
         }
 
         .modal-actions .btn {
