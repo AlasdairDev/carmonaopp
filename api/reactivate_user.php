@@ -71,21 +71,7 @@ try {
         ]);
     } catch (PDOException $e) {
         // If logging table doesn't exist, continue without logging
-        // You can create this table with:
-        /*
-        CREATE TABLE IF NOT EXISTS user_reactivation_log (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            reactivated_user_id INT NOT NULL,
-            reactivated_by_user_id INT NOT NULL,
-            reactivated_at DATETIME NOT NULL,
-            user_name VARCHAR(255),
-            user_email VARCHAR(255),
-            user_role VARCHAR(50),
-            notes TEXT,
-            INDEX idx_reactivated_user (reactivated_user_id),
-            INDEX idx_reactivated_by (reactivated_by_user_id)
-        );
-        */
+        
     }
 
     echo json_encode([
