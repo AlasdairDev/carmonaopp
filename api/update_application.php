@@ -1,6 +1,4 @@
 <?php
-// FILE: api/update_application.php
-// ENHANCED VERSION WITH EMAIL & SMS NOTIFICATIONS
 
 // Start output buffering to catch any stray output
 ob_start();
@@ -69,7 +67,7 @@ try {
         throw new Exception('Invalid status: ' . $new_status);
     }
 
-    // ✅ PREVENT COMPLETED WITHOUT PAYMENT VERIFICATION
+    // PREVENT COMPLETED WITHOUT PAYMENT VERIFICATION
     if ($new_status === 'Completed') {
         // Check if this application requires payment
         $check_payment = $pdo->prepare("
@@ -159,7 +157,7 @@ try {
         debugLog("Status history added");
 
         // Create in-app notification with specific types
-        $notification_type = 'status_update';  // default
+        $notification_type = 'status_update'; 
         if ($new_status === 'Approved') {
             $notification_type = 'approved';
         } elseif ($new_status === 'Rejected') {
@@ -215,7 +213,7 @@ try {
                         $application['email'],
                         $emailTemplate['subject'],
                         $emailTemplate['body'],
-                        '',  // altBody
+                        '',  
                         $application['user_id'],
                         $app_id,
                         $application['department_id']
@@ -282,7 +280,7 @@ try {
                 'email_sent' => $email_sent,
                 'sms_sent' => $sms_sent
             ],
-            $application['department_id']  // ADD THIS - 5th parameter
+            $application['department_id']  
         );
 
         debugLog("=== UPDATE COMPLETED SUCCESSFULLY ===");
