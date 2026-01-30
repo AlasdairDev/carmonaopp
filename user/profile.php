@@ -202,9 +202,7 @@ include '../includes/header.php';
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 0rem 0.75rem;;
-        /* Reduced from 1.5rem */
         margin-bottom: 0rem;
-        /* Reduced from 2rem */
     }
 
     .form-group {
@@ -293,7 +291,6 @@ include '../includes/header.php';
         cursor: pointer;
         padding: 0.5rem;
         display: flex !important;
-        /* Force display */
         align-items: center;
         justify-content: center;
         transition: color 0.2s;
@@ -308,7 +305,6 @@ include '../includes/header.php';
 
     .toggle-password i {
         font-size: 1rem;
-        /* Make icon visible */
         display: block;
     }
 
@@ -358,7 +354,6 @@ include '../includes/header.php';
         display: flex;
         gap: 1rem;
         padding-top: 1rem;
-        /* Less space before button */
         margin-top: 0;
         border-top: 1px solid #e2e8f0;
     }
@@ -541,7 +536,6 @@ include '../includes/header.php';
         resize: vertical;
         min-height: 100px;
         padding: 0.875rem 1rem !important;
-        /* Override the left padding */
     }
 
     textarea+.input-icon {
@@ -1001,7 +995,7 @@ include '../includes/header.php';
     }
     // AJAX Profile form submission
     function handleProfileSubmit(event) {
-        event.preventDefault(); // Always prevent default for AJAX
+        event.preventDefault();
 
         console.log('🚀 USER PROFILE FORM SUBMITTING');
 
@@ -1075,7 +1069,7 @@ include '../includes/header.php';
 
     // AJAX Password form submission
     function handlePasswordSubmit(event) {
-        event.preventDefault(); // Always prevent default for AJAX
+        event.preventDefault(); 
 
         console.log('🔐 PASSWORD FORM SUBMITTING');
 
@@ -1121,7 +1115,7 @@ include '../includes/header.php';
                 // Check response for success/error messages
                 if (html.includes('Password changed successfully')) {
                     showToast('Password changed successfully!', 'success');
-                    // Clear the password fields
+                
                     form.reset();
                 } else if (html.includes('Current password is incorrect')) {
                     showToast('Current password is incorrect', 'error');
