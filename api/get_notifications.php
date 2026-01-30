@@ -31,7 +31,7 @@ try {
     $stmt->execute([$userId]);
     $unreadCount = $stmt->fetchColumn();
     
-    // Get notifications - COLLATION SAFE
+    // Get notifications 
     $stmt = $pdo->prepare("
         SELECT n.*, a.tracking_number
         FROM notifications n
