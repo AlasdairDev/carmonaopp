@@ -2,7 +2,6 @@
 /**
  * API: Approve Application with Payment Request
  * Handles approval and sets payment requirements
- * UPDATED: Beautiful HTML email design without QR code
  */
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -103,7 +102,7 @@ try {
     
     $pdo->commit();
     
-    // Send email notification with BEAUTIFUL HTML (no QR code)
+    // Send email notification
     if ($send_email && !empty($app['email'])) {
         try {
             $email_subject = "Application Approved - Payment Required [{$app['tracking_number']}]";
