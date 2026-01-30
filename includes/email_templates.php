@@ -539,9 +539,6 @@ function sendEmailNative($to, $subject, $html_content) {
 
 // Send email using PHPMailer (SMTP)
 function sendEmailPHPMailer($to, $subject, $html_content, $to_name = '') {
-    // This function would use PHPMailer for SMTP
-    // Implementation depends on PHPMailer library being installed
-    // For now, falls back to native mail()
     return sendEmailNative($to, $subject, $html_content);
 }
 ?>
