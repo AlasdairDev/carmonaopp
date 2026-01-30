@@ -1,7 +1,6 @@
-// Real-time notification updates using SSE
 (function initNotificationStream() {
     const bellBadge = document.querySelector('.notification-badge');
-    if (!bellBadge) return; // Only run if notification bell exists
+    if (!bellBadge) return; 
     
     let eventSource = null;
     let reconnectAttempts = 0;
