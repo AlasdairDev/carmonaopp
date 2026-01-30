@@ -8,7 +8,6 @@ if (!isLoggedIn() || !isAdmin()) {
     die('Access denied');
 }
 
-// Check if TCPDF is installed
 if (!file_exists(__DIR__ . '/../vendor/autoload.php')) {
     http_response_code(500);
     die('TCPDF library not installed. Please run: composer require tecnickcom/tcpdf');
@@ -30,7 +29,6 @@ $chart_department = isset($_POST['chart_department']) ? $_POST['chart_department
 $chart_trend = isset($_POST['chart_trend']) ? $_POST['chart_trend'] : '';
 
 try {
-    // Fetch all the data (same as reports.php)
 
     // Applications by status
     $where_clause = "DATE(a.created_at) BETWEEN ? AND ?" . $dept_where;
@@ -123,7 +121,7 @@ try {
         ? round((($status_data['Approved'] ?? 0) + ($status_data['Completed'] ?? 0)) / $total_apps * 100, 1)
         : 0;
 
-    // Build HTML for PDF
+    // HTML for PDF
     $html = '
     <style>
         body {
@@ -359,7 +357,7 @@ try {
         </div>';
     }
 
-    // Add Trend Chart if available (on same page as other charts)
+    // Add Trend Chart
     if (!empty($chart_trend)) {
         $html .= '<div style="page-break-before: always;"></div>
         <div style="text-align: center; margin-bottom: 20px;">
@@ -442,7 +440,7 @@ try {
 
     // Output PDF
     $filename = 'Report_' . $date_from . '_to_' . $date_to . '.pdf';
-    $pdf->Output($filename, 'D'); // D = Download
+    $pdf->Output($filename, 'D'); 
 
 } catch (Exception $e) {
     http_response_code(500);
