@@ -4,7 +4,6 @@ require_once '../includes/functions.php';
 
 header('Content-Type: application/json');
 
-// DEBUG: Log everything
 error_log("=== DEACTIVATE USER DEBUG ===");
 error_log("POST data: " . print_r($_POST, true));
 error_log("GET data: " . print_r($_GET, true));
@@ -73,7 +72,6 @@ try {
     error_log("Found user: " . $user['name'] . " (" . $user['email'] . ")");
     $was_admin = ($user['role'] === 'admin');
 
-    // Soft delete: Set is_active to 0
     $stmt = $pdo->prepare("UPDATE users SET is_active = 0 WHERE id = ?");
     $stmt->execute([$user_id]);
     
