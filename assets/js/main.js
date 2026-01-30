@@ -1,8 +1,3 @@
-​​/**
- * Main JavaScript File
- * Local Government Permit Tracking System
- */
-
 // Auto-hide alerts after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert');
@@ -327,6 +322,5 @@ window.LGUSystem = {
 };
 
 function showAlert(message, type = 'success') {
-    alert(message); // Simple version
-    // OR use the fancy notification from main.js if you have it
+    alert(message); 
 }
