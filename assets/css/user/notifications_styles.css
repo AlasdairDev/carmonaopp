@@ -19,9 +19,6 @@ body {
 .wrapper {
     background: linear-gradient(135deg, #f5f7fa 0%, #e8f0f7 100%);
     min-height: calc(100vh - 40px);
-    /* Remove these two lines: */
-    /* height: calc(100vh - 40px); */
-    /* overflow: hidden; */
     border-radius: 24px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     position: relative;
@@ -54,9 +51,9 @@ body {
     margin: 0 0 2rem 0;
     display: flex;
     justify-content: space-between;
-    align-items: center;  /* Make sure this is here */
+    align-items: center;  
     gap: 2rem;
-    height: 195px;  /* Use fixed height instead of min/max */
+    height: 195px;  
 }
 
 .dashboard-banner h1 {
@@ -76,7 +73,7 @@ body {
 .dashboard-banner {
     background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
     border-radius: 30px;
-    padding: 3rem 2rem;  /* Changed back from 0.7rem to 3rem */
+    padding: 3rem 2rem;  
     margin-bottom: 2rem;
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     position: relative;
@@ -171,7 +168,7 @@ body {
 
 .stat-label {
     color: #64748b;
-    font-size: 1rem;  /* Changed from 0.875rem */
+    font-size: 1rem;  
     font-weight: 600;
     letter-spacing: 0.3px;
 }
@@ -180,11 +177,11 @@ body {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
     font-weight: 800;
-    font-size: 1.75rem;  /* Changed from 1.25rem */
+    font-size: 1.75rem;  
     line-height: 1;
-    padding: 0.6rem 1rem;  /* Adjusted padding */
+    padding: 0.6rem 1rem;  
     border-radius: 10px;
-    min-width: 50px;  /* Increased from 42px */
+    min-width: 50px;  
     text-align: center;
     box-shadow: 0 4px 12px rgba(124, 179, 66, 0.25);
 }
@@ -199,7 +196,7 @@ body {
 }
 
 .filter-tab {
-    padding: 0.875rem 2rem;  /* Increased padding */
+    padding: 0.875rem 2rem;  
     border-radius: 10px;
     border: none;
     background: transparent;
@@ -208,7 +205,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
-    font-size: 1rem;  /* Changed from 0.9rem */
+    font-size: 1rem;  
 }
 
 .filter-tab:hover {
@@ -401,8 +398,8 @@ body {
 
 
 .empty-icon {
-    font-size: 4rem;  /* Changed from 5rem */
-    margin-bottom: 1rem;  /* Changed from 1.5rem */
+    font-size: 4rem; 
+    margin-bottom: 1rem;  
 }
 
 
