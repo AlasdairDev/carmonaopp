@@ -1,14 +1,11 @@
 <?php
-/**
- * LGU Permit Tracking System - Configuration File
- * Auto-detects Local vs Production environment
- */
+
 // 1. Prevent "Session already started" errors
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2. Set Timezone (Important for Philippines)
+// 2. Set Timezone 
 date_default_timezone_set('Asia/Manila');
 
 // 3. Detect Environment (Local vs Production)
@@ -28,13 +25,13 @@ if ($isLocal) {
     ini_set('log_errors', 1);
 }
 
-// User Roles - UPDATED FOR RBAC
+// User Roles 
 define('ROLE_USER', 'user');
-define('ROLE_ADMIN', 'admin'); // Legacy admin role
-define('ROLE_DEPARTMENT_ADMIN', 'department_admin'); // NEW
-define('ROLE_SUPERADMIN', 'superadmin'); // NEW
+define('ROLE_ADMIN', 'admin');
+define('ROLE_DEPARTMENT_ADMIN', 'department_admin');
+define('ROLE_SUPERADMIN', 'superadmin');
 
-// 5. Database Configuration (Auto-switch based on environment)
+// 5. Database Configuration 
 if ($isLocal) {
     // LOCAL DEVELOPMENT
     define('DB_HOST', 'localhost');
@@ -82,7 +79,7 @@ try {
         ]
     );
     
-    // ✅ FIX FOR INFINITYFREE: Set MySQL timezone to Philippine time (+08:00)
+   
     // This ensures all timestamps are stored and retrieved in Philippine timezone
     try {
         $pdo->exec("SET time_zone = '+08:00'");
@@ -240,8 +237,8 @@ function logActivity($user_id, $action, $description, $details = null, $related_
             $details ? json_encode($details) : null,
             $ip_address,
             $user_agent,
-            $department_id,           // Actor's department (from session)
-            $related_department_id    // Affected department (from parameter)
+            $department_id,           
+            $related_department_id   
         ]);
         
         return true;
@@ -251,10 +248,7 @@ function logActivity($user_id, $action, $description, $details = null, $related_
     }
 }
 
-/**
- * ✅ NEW FUNCTION: Convert database timestamp to relative time
- * This handles timezone conversion for display purposes
- */
+
 function getRelativeTime($timestamp) {
     if (empty($timestamp)) {
         return 'Unknown';
