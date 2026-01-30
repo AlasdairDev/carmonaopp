@@ -1,13 +1,179 @@
 <?php
 /**
  * Security Functions for LGU Permit Tracking System
- * Includes CSRF protection, rate limiting, and security logging
+ * Includes CSRF protection, rate limiting, security logging, and RBAC
+ * UPDATED WITH ROLE-BASED ACCESS CONTROL
  */
 
 // Ensure session is started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+/**
+ * ============================================
+ * RBAC FUNCTIONS (NEW)
+ * ============================================
+ */
+
+/**
+ * Get department name of the logged-in admin
+ */
+function getAdminDepartmentName() {
+    global $pdo;
+    
+    $dept_id = getAdminDepartmentId();
+    if (!$dept_id) {
+        return null;
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT name FROM departments WHERE id = ?");
+        $stmt->execute([$dept_id]);
+        $result = $stmt->fetch();
+        return $result ? $result['name'] : null;
+    } catch (PDOException $e) {
+        error_log("Error getting department name: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Check if admin has access to a specific department
+ * Superadmins have access to all departments
+ * Department admins only have access to their own department
+ */
+function hasAccessToDepartment($department_id) {
+    if (isSuperAdmin()) {
+        return true; // Superadmin has access to all departments
+    }
+    
+    if (isDepartmentAdmin()) {
+        return getAdminDepartmentId() == $department_id;
+    }
+    
+    return false;
+}
+
+/**
+ * Check if admin has access to a specific application
+ * Based on the application's department
+ */
+function hasAccessToApplication($application_id) {
+    global $pdo;
+    
+    if (isSuperAdmin()) {
+        return true; // Superadmin has access to all applications
+    }
+    
+    if (!isDepartmentAdmin()) {
+        return false;
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT department_id FROM applications WHERE id = ?");
+        $stmt->execute([$application_id]);
+        $result = $stmt->fetch();
+        
+        if ($result) {
+            return hasAccessToDepartment($result['department_id']);
+        }
+    } catch (PDOException $e) {
+        error_log("Error checking application access: " . $e->getMessage());
+    }
+    
+    return false;
+}
+
+/**
+ * Get department filter for SQL queries
+ * Returns WHERE clause to filter by department if needed
+ */
+/**
+ * Get department filter for queries (for department admins)
+ * Returns array with WHERE clause and parameters
+ */
+function getDepartmentFilter($table_alias = '') {
+    // If superadmin, no filtering needed
+    if (isSuperAdmin()) {
+        return [
+            'where' => '',
+            'params' => []
+        ];
+    }
+    
+    // If department admin, filter by their department
+    if (isDepartmentAdmin()) {
+        $dept_id = getAdminDepartmentId();
+        if ($dept_id) {
+            $alias = $table_alias ? $table_alias . '.' : '';
+            return [
+                'where' => "{$alias}department_id = ?",
+                'params' => [$dept_id]
+            ];
+        }
+    }
+    
+    // Legacy admin or no department restriction
+    return [
+        'where' => '',
+        'params' => []
+    ];
+}
+
+/**
+ * Get user's role display name
+ */
+function getRoleDisplayName($role = null) {
+    if ($role === null) {
+        $role = $_SESSION['role'] ?? '';
+    }
+    
+    $roles = [
+        'user' => 'User',
+        'admin' => 'Admin',
+        'department_admin' => 'Department Admin',
+        'superadmin' => 'Super Admin'
+    ];
+    
+    return $roles[$role] ?? 'Unknown';
+}
+
+/**
+ * Prevent admin from accessing user pages
+ */
+function preventAdminAccessToUserPages() {
+    if (isAdmin()) {
+        log_security_event('UNAUTHORIZED_ACCESS', 'Attempt to access user dashboard', [
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        header('Location: ../admin/dashboard.php');
+        exit();
+    }
+}
+
+/**
+ * Prevent user from accessing admin pages
+ */
+function preventUserAccessToAdminPages() {
+    if (!isAdmin()) {
+        log_security_event('UNAUTHORIZED_ACCESS', 'Attempt to access admin area', [
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        header('Location: ../user/dashboard.php');
+        exit();
+    }
+}
+
+/**
+ * ============================================
+ * EXISTING SECURITY FUNCTIONS
+ * ============================================
+ */
 
 /**
  * Generate CSRF Token
@@ -246,14 +412,23 @@ function validate_password_strength($password, $min_length = 8) {
         $errors[] = "Password must contain at least one number";
     }
     
-    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
-        $errors[] = "Password must contain at least one special character";
-    }
+    // Optional: Special character requirement (commented out for flexibility)
+    // if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+    //     $errors[] = "Password must contain at least one special character";
+    // }
     
     return [
         'valid' => empty($errors),
         'errors' => $errors
     ];
+}
+
+/**
+ * Simple password strength check (for backward compatibility)
+ */
+function isStrongPassword($password) {
+    $result = validate_password_strength($password);
+    return $result['valid'];
 }
 
 /**
@@ -386,7 +561,7 @@ function detect_xss($input) {
  * @param string $reason Reason for failure
  */
 function log_failed_login($email, $reason = 'Invalid credentials') {
-    log_security_event('LOGIN_FAILURE', "Failed login attempt for: {$email}", [
+    log_security_event('LOGIN_FAILURE', "Invalid password for: {$email}", [
         'reason' => $reason,
         'email' => $email
     ]);
@@ -400,7 +575,7 @@ function log_failed_login($email, $reason = 'Invalid credentials') {
  * @param string $email Email used
  */
 function log_successful_login($user_id, $email) {
-    log_security_event('LOGIN_SUCCESS', "Successful login", [
+    log_security_event('LOGIN_SUCCESS', "User ID: {$user_id}, Email: {$email}", [
         'user_id' => $user_id,
         'email' => $email
     ]);

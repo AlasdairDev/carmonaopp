@@ -3,33 +3,46 @@ require_once __DIR__ . '/../config.php';
 require_once '../includes/functions.php';
 
 if (!isLoggedIn() || !isAdmin()) {
-   header('Location: ../login.php');
-   exit();
+    header('Location: ../login.php');
+    exit();
 }
-
+if (!isSuperAdmin()) {
+    $_SESSION['error'] = 'Access denied. Only superadmins can manage users.';
+    header('Location: dashboard.php');
+    exit();
+}
 // --- LOGIC SECTION ---
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
 $role_filter = isset($_GET['role']) ? $_GET['role'] : '';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
-// Build query
+// Build query - show ALL users (both active and deactivated)
 $where = [];
 $params = [];
 
 if ($role_filter && $role_filter !== 'all') {
-   $where[] = "role = ?";
-   $params[] = $role_filter;
+    $where[] = "role = ?";
+    $params[] = $role_filter;
+}
+
+if ($status_filter) {
+    if ($status_filter === 'active') {
+        $where[] = "is_active = 1";
+    } elseif ($status_filter === 'deactivated') {
+        $where[] = "is_active = 0";
+    }
 }
 
 if ($search) {
-   $where[] = "(name LIKE ? OR email LIKE ? OR mobile LIKE ?)";
-   $search_param = "%$search%";
-   $params[] = $search_param;
-   $params[] = $search_param;
-   $params[] = $search_param;
+    $where[] = "(name LIKE ? OR email LIKE ? OR mobile LIKE ?)";
+    $search_param = "%$search%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $params[] = $search_param;
 }
 
 $where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
@@ -47,13 +60,18 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $users = $stmt->fetchAll();
 
-// Get statistics
+// Get statistics - count all users
 $stats = [
-   'total' => $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?: 0,
-   'admins' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn() ?: 0,
-   'users' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn() ?: 0,
-   'today' => $pdo->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURDATE()")->fetchColumn() ?: 0
+    'total' => $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?: 0,
+    'admins' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn() ?: 0,
+    'users' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn() ?: 0,
+    'deactivated' => $pdo->query("SELECT COUNT(*) FROM users WHERE is_active = 0")->fetchColumn() ?: 0
 ];
+
+// Get current user data for header
+$current_user_stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$current_user_stmt->execute([$_SESSION['user_id']]);
+$current_user = $current_user_stmt->fetch();
 
 $pageTitle = 'User Management';
 include '../includes/header.php';
@@ -61,721 +79,40 @@ include '../includes/header.php';
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        :root {
-            --primary: #8bc34a;
-            --primary-dark: #689f38;
-            --primary-light: #dcedc8;
-            --secondary: #558b2f;
-            --background: #f5f7fa;
-            --surface: #ffffff;
-            --text-primary: #2c3e50;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-            --radius: 12px;
-        }
+    <link rel="stylesheet" href="../assets/css/admin-responsive.css">
+    <link rel="stylesheet" href="../assets/css/admin/users_styles.css">
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--background);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 1.5rem 1.5rem 1.5rem;
-        }
-
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            border-radius: var(--radius);
-            padding: 2rem;
-            color: white;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .page-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-
-        .page-header h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .page-header p {
-            font-size: 1rem;
-            opacity: 0.95;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header-actions {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 1.75rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--primary);
-            transition: width 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .stat-card:hover::before {
-            width: 8px;
-        }
-
-        .stat-card h3 {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.75rem;
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        /* Filters Section */
-        .filters-section {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
-        }
-
-        .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .filters-header h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            align-items: end;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .filter-group label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-control {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-            background: var(--background);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.1);
-            background: white;
-        }
-
-        .filter-actions {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.75rem;
-            grid-column: 1 / -1;
-        }
-
-        .filter-actions .btn {
-            width: 100%;
-            margin: 0;
-            padding: 0.75rem 1.5rem;
-            text-align: center;
-            box-sizing: border-box;
-        }
-
-        .filter-group .btn {
-            width: 100%;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
-        }
-
-        .btn-secondary {
-            background: #e2e8f0;
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-            background: #cbd5e1;
-        }
-
-        .btn-white {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-white:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Results Info */
-        .results-info {
-            background: var(--surface);
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius);
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow);
-        }
-
-        .results-count {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .results-count strong {
-            color: var(--text-primary);
-            font-weight: 700;
-        }
-
-        /* Table */
-        .table-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        .modern-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .modern-table thead {
-            background: linear-gradient(135deg, rgba(139, 195, 74, 0.1) 0%, rgba(102, 187, 106, 0.1) 100%);
-        }
-
-        .modern-table th {
-            padding: 1rem;
-            text-align: left;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .modern-table tbody tr {
-            transition: background 0.2s ease;
-            cursor: default;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .modern-table tbody tr:hover {
-            background: var(--background);
-        }
-
-        .modern-table td {
-            padding: 1rem;
-            font-size: 0.875rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .user-avatar.admin {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .user-avatar.user {
-            background: #f0f0f0;
-            color: #999;
-        }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .user-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.125rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.625rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            background: #e3f2fd;
-            color: #1976d2;
-            margin-top: 0.25rem;
-        }
-
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.375rem 0.875rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .role-admin {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .role-user {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-icon {
-            background: none;
-            border: none;
-            color: var(--primary);
-            font-weight: 800;
-            cursor: pointer;
-            padding: 0.5rem;
-            transition: color 0.2s ease;
-            font-size: 0.875rem;
-        }
-
-        .btn-icon:hover {
-            color: var(--primary-dark);
-        }
-
-        .btn-icon.delete {
-            color: #ef5350;
-        }
-
-        .btn-icon.delete:hover {
-            color: #c62828;
-        }
-
-        .btn-icon:disabled {
-            color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .page-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: white;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
-
-        .page-btn:hover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-        }
-
-        .page-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-secondary);
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.3;
-        }
-
-        .empty-state h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: var(--radius);
-            padding: 2rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .modal-header h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            color: #999;
-            padding: 0;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .close-modal:hover {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-.modal-actions {
-    display: flex !important;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-}
-
-.modal-actions .btn {
-    flex: 1;
-    height: 48px !important;
-    min-height: 48px;
-    max-height: 48px;
-    padding: 0 1.5rem !important;
-    margin: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 8px !important;
-    box-sizing: border-box;
-}
-
-.modal-actions .btn-secondary,
-.modal-actions .btn-primary {
-    height: 48px !important;
-}
-
-        /* Row deletion animation */
-        .row-deleting {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .filters-grid {
-                grid-template-columns: 1fr 2fr;
-            }
-
-            .filters-grid .filter-group:nth-child(3),
-            .filters-grid .filter-group:nth-child(4) {
-                grid-column: span 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 1rem 1rem 1rem;
-            }
-
-            .page-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filters-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filters-grid .filter-group:nth-child(3),
-            .filters-grid .filter-group:nth-child(4) {
-                grid-column: span 1;
-            }
-
-            .results-info {
-                flex-direction: column;
-                gap: 0.5rem;
-                text-align: center;
-            }
-
-            .table-container {
-                overflow-x: scroll;
-            }
-        }
-        /* Ensure consistent button and input styling */
-.filter-group .btn {
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px !important;
-}
-
-.filter-group input[type="text"],
-.filter-group select {
-    border-radius: 8px !important;
-    height: 48px;
-}
-
-.btn-primary {
-    border-radius: 8px !important;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
-}
-
-.btn-secondary {
-    border-radius: 8px !important;
-}
-
-.btn-secondary:hover {
-    background: #cbd5e1;
-    color: var(--text-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(226, 232, 240, 0.5);
-}
-    </style>
 </head>
+
 <body>
     <div class="container">
-        <!-- Page Header -->
+        <!-- Header -->
         <div class="page-header">
-            <div>
-                <h1> User Management</h1>
-                <p>Managing <strong><?php echo number_format($total); ?></strong> registered users</p>
-            </div>
-            <div class="header-actions">
-                <button onclick="showAddUserModal()" class="btn btn-white">
-                    <i class="fas fa-plus"></i> Add New User
-                </button>
+            <div class="page-header-content">
+                <div class="page-header-left">
+                    <h1>
+                        User Management
+                    </h1>
+                    <p>Managing <strong id="managingCount"><?php echo number_format($total); ?></strong> registered
+                        users</p>
+                </div>
+                <div class="page-header-right">
+                    <button onclick="showAddUserModal()" class="btn btn-white">
+                        <i class="fas fa-plus"></i> Add New User
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -794,8 +131,10 @@ include '../includes/header.php';
                 <div class="stat-value" id="regularUsersCount"><?php echo $stats['users']; ?></div>
             </div>
             <div class="stat-card">
-                <h3>Joined Today</h3>
-                <div class="stat-value"><?php echo $stats['today']; ?></div>
+                <h3>Deactivated</h3>
+                <div class="stat-value" style="color: #f59e0b;" id="deactivatedCount">
+                    <?php echo $stats['deactivated']; ?>
+                </div>
             </div>
         </div>
 
@@ -808,26 +147,38 @@ include '../includes/header.php';
                 </h3>
             </div>
 
-            <form method="GET" action="">
+            <form id="filterForm">
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label>Role</label>
-                        <select name="role" class="form-control">
+                        <select name="role" id="roleFilter" class="form-control">
                             <option value="">All Roles</option>
-                            <option value="user" <?php echo $role_filter === 'user' ? 'selected' : ''; ?>>Regular Users</option>
-                            <option value="admin" <?php echo $role_filter === 'admin' ? 'selected' : ''; ?>>Administrators</option>
+                            <option value="user" <?php echo $role_filter === 'user' ? 'selected' : ''; ?>>Regular Users
+                            </option>
+                            <option value="admin" <?php echo $role_filter === 'admin' ? 'selected' : ''; ?>>Administrators
+                            </option>
                         </select>
                     </div>
-
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select name="status" id="statusFilter" class="form-control">
+                            <option value="">All Users</option>
+                            <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Active
+                                Only</option>
+                            <option value="deactivated" <?php echo $status_filter === 'deactivated' ? 'selected' : ''; ?>>
+                                Deactivated Only</option>
+                        </select>
+                    </div>
                     <div class="filter-group">
                         <label>Search</label>
-                        <input type="text" name="search" class="form-control" placeholder="Name, Email, or Mobile..." value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" id="searchFilter" class="form-control"
+                            placeholder="Name, Email, or Mobile..." value="<?php echo htmlspecialchars($search); ?>">
                     </div>
 
                     <div class="filter-group">
-                        <a href="users.php" class="btn btn-secondary">
+                        <button type="button" id="resetBtn" class="btn btn-secondary">
                             <i class="fas fa-sync-alt"></i> Reset
-                        </a>
+                        </button>
                     </div>
 
                     <div class="filter-group">
@@ -842,137 +193,169 @@ include '../includes/header.php';
         <!-- Results Info -->
         <div class="results-info">
             <div class="results-count">
-                Showing <strong><?php echo count($users); ?></strong> of <strong><?php echo number_format($total); ?></strong> users
+                Showing <strong id="showingCount"><?php echo count($users); ?></strong> of
+                <strong id="totalCount"><?php echo number_format($total); ?></strong> users
             </div>
         </div>
 
         <!-- Users Table -->
-        <?php if (empty($users)): ?>
-            <div class="table-card">
-                <div class="empty-state">
-                    <i class="fas fa-user-slash"></i>
-                    <h3>No Users Found</h3>
-                    <p>Try adjusting your filters or search criteria</p>
+        <div id="usersTableWrapper">
+            <?php if (empty($users)): ?>
+                <div class="table-card">
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Users Found</h3>
+                        <p>Try adjusting your filters or search criteria</p>
+                    </div>
                 </div>
-            </div>
-        <?php else: ?>
-            <div class="table-card">
-                <div class="table-container">
-                    <table class="modern-table">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Contact Info</th>
-                                <th>Role</th>
-                                <th>Applications</th>
-                                <th>Registered</th>
-                                <th style="text-align: center;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <?php foreach ($users as $user):
-                                $app_count_stmt = $pdo->prepare("SELECT COUNT(*) FROM applications WHERE user_id = ?");
-                                $app_count_stmt->execute([$user['id']]);
-                                $app_count = $app_count_stmt->fetchColumn();
-                                $is_self = ($user['id'] == $_SESSION['user_id']);
-                                $is_admin = ($user['role'] === 'admin');
-                            ?>
-                            <tr id="user-row-<?php echo $user['id']; ?>" data-user-id="<?php echo $user['id']; ?>" data-user-role="<?php echo $user['role']; ?>">
-                                <td>
-                                    <div class="user-info">
-                                        <div class="user-avatar <?php echo $is_admin ? 'admin' : 'user'; ?>">
-                                            <i class="fas fa-<?php echo $is_admin ? 'user-shield' : 'user'; ?>"></i>
-                                        </div>
-                                        <div class="user-details">
-                                            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
-                                            <?php if ($is_self): ?>
-                                                <span class="user-badge">YOU</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div><?php echo htmlspecialchars($user['email']); ?></div>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                        <?php echo htmlspecialchars($user['mobile'] ?: 'No Phone'); ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="role-badge <?php echo $is_admin ? 'role-admin' : 'role-user'; ?>">
-                                        <?php echo ucfirst($user['role']); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="applications.php?search=<?php echo urlencode($user['email']); ?>" 
-                                    style="color: var(--primary); font-weight: 700; text-decoration: none;">
-                                        <?php echo $app_count; ?> <?php echo $app_count == 1 ? 'Application' : 'Applications'; ?>
-                                    </a>
-                                </td>
-                                <td>
-                                    <div><?php echo date('M d, Y', strtotime($user['created_at'])); ?></div>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                        <?php echo date('h:i A', strtotime($user['created_at'])); ?>
-                                    </div>
-                                </td>
-                                <td style="text-align: center;">
-                                    <div class="action-buttons">
-                                        <button onclick="editUser(<?php echo $user['id']; ?>)" class="btn-icon" title="Edit">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <?php if (!$is_self): ?>
-                                            <button onclick="deleteUser(<?php echo $user['id']; ?>, <?php echo $is_admin ? 'true' : 'false'; ?>)" 
-                                                    class="btn-icon delete" 
-                                                    title="<?php echo $is_admin ? 'Delete Admin (Requires confirmation)' : 'Delete User'; ?>">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <?php else: ?>
+                <div class="table-card">
+                    <div class="table-container">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Contact Info</th>
+                                    <th>Role</th>
+                                    <th>Applications</th>
+                                    <th>Registered</th>
+                                    <th style="text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <?php foreach ($users as $user): ?>
+                                    <?php
+                                    $app_count_query = $pdo->prepare("SELECT COUNT(*) FROM applications WHERE user_id = ?");
+                                    $app_count_query->execute([$user['id']]);
+                                    $app_count = $app_count_query->fetchColumn();
 
-            <!-- Pagination -->
-            <?php if ($total_pages > 1): ?>
-                <div class="pagination">
-                    <?php if ($page > 1): ?>
-                        <?php
-                        $prev_params = $_GET;
-                        $prev_params['page'] = $page - 1;
-                        ?>
-                        <a href="?<?php echo http_build_query($prev_params); ?>" class="page-btn">
-                            <i class="fas fa-chevron-left"></i> Previous
-                        </a>
-                    <?php endif; ?>
+                                    $isCurrentUser = $user['id'] === $_SESSION['user_id'];
+                                    $initials = '';
+                                    $name_parts = explode(' ', $user['name']);
+                                    foreach ($name_parts as $part) {
+                                        if (!empty($part)) {
+                                            $initials .= strtoupper(substr($part, 0, 1));
+                                        }
+                                    }
+                                    $initials = substr($initials, 0, 2);
 
-                    <?php
-                    $start = max(1, $page - 2);
-                    $end = min($total_pages, $page + 2);
-                    
-                    for ($i = $start; $i <= $end; $i++):
-                        $page_params = $_GET;
-                        $page_params['page'] = $i;
-                    ?>
-                        <a href="?<?php echo http_build_query($page_params); ?>" class="page-btn <?php echo $i === $page ? 'active' : ''; ?>">
-                            <?php echo $i; ?>
-                        </a>
-                    <?php endfor; ?>
-
-                    <?php if ($page < $total_pages): ?>
-                        <?php
-                        $next_params = $_GET;
-                        $next_params['page'] = $page + 1;
-                        ?>
-                        <a href="?<?php echo http_build_query($next_params); ?>" class="page-btn">
-                            Next <i class="fas fa-chevron-right"></i>
-                        </a>
-                    <?php endif; ?>
+                                    // Check if user is deactivated
+                                    $isDeactivated = $user['is_active'] == 0;
+                                    ?>
+                                    <tr id="user-row-<?php echo $user['id']; ?>" data-user-role="<?php echo $user['role']; ?>"
+                                        style="<?php echo $isDeactivated ? 'background: #fff7ed;' : ''; ?>">
+                                        <td>
+                                            <div class="user-info-cell">
+                                                <div class="user-avatar"
+                                                    style="<?php echo $isDeactivated ? 'background: #f59e0b;' : ''; ?>">
+                                                    <span><?php echo $initials; ?></span>
+                                                </div>
+                                                <div class="user-details">
+                                                    <div class="user-name">
+                                                        <?php echo htmlspecialchars($user['name']); ?>
+                                                        <?php if ($isCurrentUser): ?>
+                                                            <span class="badge badge-info" style="font-size: 0.625rem;">YOU</span>
+                                                        <?php endif; ?>
+                                                        <?php if ($isDeactivated): ?>
+                                                            <span class="badge"
+                                                                style="background: #fed7aa; color: #c2410c; font-size: 0.625rem; margin-left: 0.5rem;">DEACTIVATED</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="contact-info">
+                                                <div>
+                                                    <i class="fas fa-envelope"></i>
+                                                    <span><?php echo htmlspecialchars($user['email']); ?></span>
+                                                </div>
+                                                <div>
+                                                    <i class="fas fa-phone"></i>
+                                                    <span><?php echo htmlspecialchars($user['mobile'] ?? 'N/A'); ?></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge badge-<?php echo $user['role'] === 'admin' ? 'admin' : 'user'; ?>">
+                                                <?php echo strtoupper($user['role']); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-applications">
+                                                <?php echo $app_count; ?> Application<?php echo $app_count != 1 ? 's' : ''; ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="date-cell">
+                                                <?php
+                                                $date = new DateTime($user['created_at']);
+                                                echo $date->format('M d, Y');
+                                                ?>
+                                                <div class="date-time">
+                                                    <?php echo $date->format('h:i A'); ?>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <div class="action-buttons">
+                                                <?php if ($isDeactivated): ?>
+                                                    <button class="btn-action btn-reactivate"
+                                                        onclick="reactivateUser(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['name']); ?>', <?php echo $user['role'] === 'admin' ? 'true' : 'false'; ?>)"
+                                                        title="Reactivate User">
+                                                        <i class="fas fa-check-circle"></i> Reactivate
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button class="btn-action btn-edit"
+                                                        onclick="editUser(<?php echo htmlspecialchars(json_encode($user)); ?>)"
+                                                        title="Edit User">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <?php if (!$isCurrentUser): ?>
+                                                        <button class="btn-action btn-deactivate"
+                                                            onclick="deactivateUser(<?php echo $user['id']; ?>, <?php echo $user['role'] === 'admin' ? 'true' : 'false'; ?>)"
+                                                            title="Deactivate User">
+                                                            <i class="fas fa-user-slash"></i> Deactivate
+                                                        </button>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             <?php endif; ?>
-        <?php endif; ?>
+        </div>
+
+        <!-- Pagination -->
+        <div id="paginationWrapper">
+            <?php if ($total_pages > 1): ?>
+                <div class="pagination-wrapper">
+                    <div class="pagination">
+                        <?php if ($page > 1): ?>
+                            <a href="#" onclick="loadPage(<?php echo ($page - 1); ?>); return false;" class="pagination-btn">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        <?php endif; ?>
+
+                        <span class="pagination-info">
+                            Page <span id="currentPage"><?php echo $page; ?></span> of <span
+                                id="totalPages"><?php echo $total_pages; ?></span>
+                        </span>
+
+                        <?php if ($page < $total_pages): ?>
+                            <a href="#" onclick="loadPage(<?php echo ($page + 1); ?>); return false;" class="pagination-btn">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- User Modal -->
@@ -982,43 +365,82 @@ include '../includes/header.php';
                 <h3 id="modalTitle">Add New User</h3>
                 <button class="close-modal" onclick="closeUserModal()">&times;</button>
             </div>
-            
+
             <form id="userForm">
                 <input type="hidden" id="userId" name="user_id">
-                
+
                 <div class="form-group">
-                    <label>Full Name <span style="color: red;">*</span></label>
-                    <input type="text" id="fullName" name="full_name" class="form-control" required placeholder="Juan Dela Cruz">
+                    <label for="fullName">Full Name *</label>
+                    <input type="text" id="fullName" name="name" class="form-control" required>
+                    <div class="error-message" id="fullName-error"></div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label>Email Address <span style="color: red;">*</span></label>
-                    <input type="email" id="email" name="email" class="form-control" required placeholder="juan@example.com">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                    <div class="error-message" id="email-error"></div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="09123456789">
+                    <label for="phone">Mobile Number</label>
+                    <input type="tel" id="phone" name="mobile" class="form-control" placeholder="09XXXXXXXXX">
+                    <div class="error-message" id="phone-error"></div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label>Role <span style="color: red;">*</span></label>
-                    <select id="role" name="role" class="form-control" required>
-                        <option value="user">Regular User</option>
-                        <option value="admin">Administrator</option>
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" class="form-control" rows="3"
+                        placeholder="Enter complete address"></textarea>
+                    <div class="error-message" id="address-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select class="form-control" id="role" name="role" required>
+                        <option value="user">User</option>
+                        <option value="department_admin">Department Admin</option>
+                        <option value="superadmin">Super Admin</option>
                     </select>
                 </div>
-                
-                <div class="form-group" id="passwordGroup">
-                    <label>Password <span style="color: red;">*</span></label>
-                    <input type="password" id="password" name="password" class="form-control">
-                    <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
-                        Leave blank to keep current password (when editing)
-                    </small>
+
+                <!-- ADD THIS - Department field -->
+                <div class="form-group" id="departmentGroup" style="display: none;">
+                    <label for="department">Department <span class="text-danger">*</span></label>
+                    <select class="form-control" id="department" name="department_id">
+                        <option value="">Select Department</option>
+                        <?php
+                        $dept_stmt = $pdo->query("SELECT id, name, code FROM departments WHERE is_active = 1 ORDER BY name");
+                        while ($dept = $dept_stmt->fetch()) {
+                            echo "<option value='{$dept['id']}'>{$dept['name']} ({$dept['code']})</option>";
+                        }
+                        ?>
+                    </select>
+                    <small class="form-text text-muted">Required for Department Admin role</small>
                 </div>
-                
+                <div class="form-group" id="passwordGroup">
+                    <label for="password">Password *</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" class="form-control">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                            <i class="fas fa-eye-slash"></i> <!-- Changed from fa-eye -->
+                        </button>
+                    </div>
+                    <div class="error-message" id="password-error"></div>
+                </div>
+
+                <div class="form-group" id="confirmPasswordGroup">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirmPassword" name="confirm_password" class="form-control">
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                            <i class="fas fa-eye-slash"></i> <!-- Changed from fa-eye -->
+                        </button>
+                    </div>
+                    <div class="error-message" id="confirmPassword-error"></div>
+                </div>
+
                 <div class="modal-actions">
-                    <button type="button" onclick="closeUserModal()" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">
                         Cancel
                     </button>
                     <button type="submit" class="btn btn-primary">
@@ -1028,163 +450,791 @@ include '../includes/header.php';
             </form>
         </div>
     </div>
+    <!-- Around line 609 - Make sure your Deactivation Modal looks like this -->
+    <div id="deactivateModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Confirm Deactivation</h3>
+                <button class="close-modal" onclick="closeDeactivateModal()">&times;</button>
+            </div>
 
+            <div style="padding: 1.5rem 0;">
+                <div
+                    style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #92400e; margin-bottom: 0.5rem;">
+                        <i class="fas fa-exclamation-triangle"></i> Warning
+                    </div>
+                    <div style="color: #78350f; font-size: 0.875rem;">
+                        You are about to deactivate a user account
+                    </div>
+                </div>
+
+                <div id="deactivateUserInfo"
+                    style="background: var(--background); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <!-- User info will be inserted here -->
+                </div>
+
+                <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.8;">
+                    <strong style="color: var(--text-primary); display: block; margin-bottom: 0.75rem;">This
+                        will:</strong>
+                    <div style="display: flex; align-items: start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-times-circle" style="color: #ef4444; margin-top: 0.25rem;"></i>
+                        <span>Prevent the user from logging in</span>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-database" style="color: #3b82f6; margin-top: 0.25rem;"></i>
+                        <span>Keep all their data intact</span>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 0.5rem;">
+                        <i class="fas fa-undo" style="color: #10b981; margin-top: 0.25rem;"></i>
+                        <span>Can be reversed by reactivating the account</span>
+                    </div>
+                </div>
+
+                <div id="adminWarning"
+                    style="display: none; background: #fee2e2; border-left: 4px solid #dc2626; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <div style="font-weight: 700; color: #991b1b; margin-bottom: 0.5rem;">
+                        <i class="fas fa-exclamation-circle"></i> ADMIN DEACTIVATION
+                    </div>
+                    <div style="color: #7f1d1d; font-size: 0.875rem;">
+                        This will temporarily remove administrator access. This action will be logged for audit
+                        purposes.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeactivateModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn" id="confirmDeactivateBtn"
+                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+                    <i class="fas fa-user-slash"></i> Deactivate User
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reactivation Confirmation Modal -->
+    <div id="reactivateModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-check-circle" style="color: #10b981;"></i> Confirm Reactivation</h3>
+                <button class="close-modal" onclick="closeReactivateModal()">&times;</button>
+            </div>
+
+            <div style="padding: 1.5rem 0;">
+                <div
+                    style="background: #d1fae5; border-left: 4px solid #10b981; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #065f46; margin-bottom: 0.5rem;">
+                        <i class="fas fa-check-circle"></i> Reactivate Account
+                    </div>
+                    <div style="color: #047857; font-size: 0.875rem;">
+                        You are about to reactivate a user account
+                    </div>
+                </div>
+
+                <div id="reactivateUserInfo"
+                    style="background: var(--background); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <!-- User info will be inserted here -->
+                </div>
+
+                <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.8;">
+                    <strong style="color: var(--text-primary); display: block; margin-bottom: 0.75rem;">This
+                        will:</strong>
+                    <div style="display: flex; align-items: start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-check-circle" style="color: #10b981; margin-top: 0.25rem;"></i>
+                        <span>Allow the user to login again</span>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-unlock" style="color: #3b82f6; margin-top: 0.25rem;"></i>
+                        <span>Restore full account access</span>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 0.5rem;">
+                        <i class="fas fa-shield-alt" style="color: #8b5cf6; margin-top: 0.25rem;"></i>
+                        <span>Reactivate all privileges</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeReactivateModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn" id="confirmReactivateBtn"
+                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                    <i class="fas fa-check-circle"></i> Reactivate User
+                </button>
+            </div>
+        </div>
+    </div>
     <script>
-    function showAddUserModal() {
-        document.getElementById('modalTitle').textContent = 'Add New User';
-        document.getElementById('userForm').reset();
-        document.getElementById('userId').value = '';
-        document.getElementById('password').required = true;
-        document.getElementById('userModal').classList.add('show');
-    }
+        let currentPage = <?php echo $page; ?>;
 
-    function closeUserModal() {
-        document.getElementById('userModal').classList.remove('show');
-    }
+        function togglePassword(fieldId, button) {
+            const field = document.getElementById(fieldId);
+            const icon = button.querySelector('i');
 
-    async function editUser(userId) {
-        try {
-            const response = await fetch(`../api/get_user.php?id=${userId}`);
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('modalTitle').textContent = 'Edit User';
-                document.getElementById('userId').value = result.data.id;
-                document.getElementById('fullName').value = result.data.full_name || result.data.name || '';
-                document.getElementById('email').value = result.data.email || '';
-                document.getElementById('phone').value = result.data.phone || result.data.mobile || '';
-                document.getElementById('role').value = result.data.role || 'user';
-                document.getElementById('password').required = false;
-                document.getElementById('userModal').classList.add('show');
+            if (field.type === 'password') {
+                // Show password - use open eye
+                field.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             } else {
-                alert('❌ Error: ' + result.message);
+                // Hide password - use closed eye
+                field.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
             }
-        } catch (err) { 
-            console.error('Edit user error:', err);
-            alert('❌ Could not fetch user data. Please try again.'); 
         }
-    }
 
-    document.getElementById('userForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        
-        try {
-            const response = await fetch('../api/save_user.php', {
-                method: 'POST',
-                body: formData
+        function showAddUserModal() {
+            document.getElementById('modalTitle').textContent = 'Add New User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('confirmPasswordGroup').style.display = 'block';
+            document.getElementById('password').setAttribute('required', 'required');
+            document.getElementById('confirmPassword').setAttribute('required', 'required');
+
+            // Reset password fields to password type
+            document.getElementById('password').type = 'password';
+            document.getElementById('confirmPassword').type = 'password';
+
+            // FIX: Reset icons to eye-slash (closed eye) for hidden passwords
+            document.querySelectorAll('.password-toggle i').forEach(icon => {
+                icon.classList.remove('fa-eye');           // Remove open eye
+                icon.classList.add('fa-eye-slash');        // Add closed eye
             });
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('✅ User saved successfully!');
-                location.reload();
-            } else {
-                alert('❌ Error: ' + result.message);
-            }
-        } catch (error) { 
-            console.error('Save user error:', error);
-            alert('❌ An error occurred while saving. Please try again.'); 
-        }
-    });
 
-    async function deleteUser(userId, isAdmin) {
-        if (!confirm('⚠️ Are you sure you want to delete this user?\n\nThis will also delete:\n- All their applications\n- All their documents\n- All their notifications\n\nThis action cannot be undone!')) {
-            return;
+            document.getElementById('userModal').classList.add('show');
+
+            // Clear all error states
+            document.querySelectorAll('.form-control').forEach(field => {
+                field.classList.remove('error', 'success');
+            });
+            document.querySelectorAll('.error-message').forEach(msg => {
+                msg.classList.remove('show');
+                msg.textContent = '';
+            });
         }
-        
-        if (isAdmin) {
-            if (!confirm('🚨 ADMIN DELETION WARNING 🚨\n\nYou are about to delete an ADMINISTRATOR account!\n\nThis will:\n✗ Remove all admin privileges\n✗ Delete all their data permanently\n✗ This action will be logged for audit\n\nAre you ABSOLUTELY SURE you want to proceed?')) {
+
+        function editUser(user) {
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('fullName').value = user.name;
+            document.getElementById('email').value = user.email;
+            document.getElementById('phone').value = user.mobile || '';
+            document.getElementById('address').value = user.address || '';
+            document.getElementById('role').value = user.role;
+
+            // Hide password fields for edit
+            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('confirmPasswordGroup').style.display = 'none';
+            document.getElementById('password').removeAttribute('required');
+            document.getElementById('confirmPassword').removeAttribute('required');
+
+            document.getElementById('userModal').classList.add('show');
+
+            // Clear all error states
+            document.querySelectorAll('.form-control').forEach(field => {
+                field.classList.remove('error', 'success');
+            });
+            document.querySelectorAll('.error-message').forEach(msg => {
+                msg.classList.remove('show');
+                msg.textContent = '';
+            });
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('show');
+            document.getElementById('userForm').reset();
+        }
+
+        function showToast(message, type = 'success') {
+            const existingToast = document.querySelector('.toast-notification');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+
+            const icon = type === 'success' ? '✓' : '✕';
+            const iconColor = type === 'success' ? '#22c55e' : '#ef4444';
+
+            toast.innerHTML = `
+            <div class="toast-icon" style="color: ${iconColor}">${icon}</div>
+            <div class="toast-message">${message}</div>
+        `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(`${fieldId}-error`);
+
+            if (field) {
+                field.classList.add('error');
+                field.classList.remove('success');
+            }
+
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        function clearError(fieldId) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(`${fieldId}-error`);
+
+            if (field) {
+                field.classList.remove('error');
+            }
+
+            if (errorDiv) {
+                errorDiv.classList.remove('show');
+                errorDiv.textContent = '';
+            }
+        }
+
+        // Add input listeners to clear errors on input
+        ['fullName', 'email', 'phone', 'address', 'password', 'confirmPassword'].forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('input', () => clearError(fieldId));
+            }
+        });
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Clear all previous errors
+            document.querySelectorAll('.form-control').forEach(field => {
+                field.classList.remove('error', 'success');
+            });
+            document.querySelectorAll('.error-message').forEach(msg => {
+                msg.classList.remove('show');
+                msg.textContent = '';
+            });
+
+            // Get form values
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const userId = document.getElementById('userId').value;
+            const isEditing = userId !== '';
+
+            const errors = [];
+
+            // 1. Full Name Validation
+            if (fullName.length < 3) {
+                showError('fullName', 'Must be at least 3 characters long');
+                errors.push('Full name must be at least 3 characters');
+            } else if (fullName.length > 100) {
+                showError('fullName', 'Cannot exceed 100 characters');
+                errors.push('Full name is too long');
+            } else if (!/^[a-zA-ZÀ-ÿ\s.\-']+$/.test(fullName)) {
+                showError('fullName', 'Only letters, spaces, hyphens, periods allowed');
+                errors.push('Full name contains invalid characters');
+            }
+
+            // 2. Email Validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('email', 'Please enter a valid email address');
+                errors.push('Invalid email address');
+            } else if (email.length > 255) {
+                showError('email', 'Email address is too long');
+                errors.push('Email is too long');
+            }
+
+            // 3. Phone Validation
+            if (phone) {
+                const cleanPhone = phone.replace(/[\s\-]/g, '');
+                const phoneRegex = /^09[0-9]{9}$/;
+
+                if (!phoneRegex.test(cleanPhone)) {
+                    showError('phone', 'Format: 09XXXXXXXXX (11 digits)');
+                    errors.push('Invalid phone number format');
+                }
+            }
+
+            // 4. Password Validation
+            if (!isEditing || password) {
+                if (password.length > 0 && password.length < 8) {
+                    showError('password', 'Must be at least 8 characters');
+                    errors.push('Password too short');
+                }
+
+                if (password.length > 0) {
+                    const hasUppercase = /[A-Z]/.test(password);
+                    const hasLowercase = /[a-z]/.test(password);
+                    const hasNumber = /\d/.test(password);
+                    const hasSpecial = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;']/.test(password);
+
+                    if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+                        showError('password', 'Need: uppercase, lowercase, number, special char');
+                        errors.push('Password must contain uppercase, lowercase, number, and special character');
+                    }
+
+                    // Check confirm password
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    if (password !== confirmPassword) {
+                        showError('confirmPassword', 'Passwords do not match');
+                        errors.push('Passwords do not match');
+                    }
+                }
+
+                if (!isEditing && password.length === 0) {
+                    showError('password', 'Password is required for new users');
+                    errors.push('Password is required');
+                }
+            }
+
+            if (errors.length > 0) {
+                // Show first error as toast
+                showToast(errors[0], 'error');
+                return false;
+            }
+
+            // If validation passes, submit the form
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch('../api/save_user.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success message briefly before reload
+                    showToast(result.message || 'User saved successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    // ✅ FIXED: Show the specific error message from server
+                    showToast(result.message || 'An error occurred while saving.', 'error');
+
+                    // ✅ NEW: Highlight the specific field if it's a duplicate error
+                    if (result.message.includes('Email')) {
+                        showError('email', result.message);
+                    } else if (result.message.includes('Mobile')) {
+                        showError('phone', result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Save user error:', error);
+                showToast('An error occurred while saving. Please try again.', 'error');
+            }
+        });
+
+        let deactivateUserId = null;
+        let deactivateUserIsAdmin = false;
+        let reactivateUserId = null;
+        let reactivateUserName = '';
+        let reactivateUserIsAdmin = false;
+
+        function deactivateUser(userId, isAdmin) {
+            deactivateUserId = userId;  // Store the userId
+            deactivateUserIsAdmin = isAdmin;
+
+            // Get user info from the row
+            const row = document.getElementById(`user-row-${userId}`);
+            if (!row) {
+                showToast('User not found', 'error');
                 return;
             }
-        }
-        
-        const row = document.getElementById(`user-row-${userId}`);
-        if (!row) {
-            console.error('Row not found for user:', userId);
-            return;
-        }
-        
-        const userRole = row.dataset.userRole;
-        
-        try {
-            const response = await fetch('../api/delete_user.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ user_id: userId })
+
+            // FIX: Better way to get user name - remove badges properly
+            const userNameElement = row.querySelector('.user-name');
+            let userName = userNameElement.textContent;
+            // Remove all badges from the name
+            const badges = userNameElement.querySelectorAll('.badge');
+            badges.forEach(badge => {
+                userName = userName.replace(badge.textContent, '');
             });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                row.classList.add('row-deleting');
-                
-                setTimeout(() => {
-                    row.remove();
-                    updateStatsAfterDelete(userRole);
-                    
-                    const tbody = document.getElementById('usersTableBody');
-                    if (tbody && tbody.children.length === 0) {
-                        const tableContainer = tbody.closest('.table-card');
-                        if (tableContainer) {
-                            tableContainer.innerHTML = `
-                                <div class="empty-state">
-                                    <i class="fas fa-user-slash"></i>
-                                    <h3>No Users Found</h3>
-                                    <p>All users have been removed.</p>
-                                </div>
-                            `;
+            userName = userName.trim();
+
+            const userEmail = row.querySelector('.contact-info .fa-envelope').nextElementSibling.textContent;
+            const userRole = isAdmin ? 'Administrator' : 'Regular User';
+
+            // Update modal content
+            document.getElementById('deactivateUserInfo').innerHTML = `
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-primary);">User:</strong> 
+            <span style="color: var(--text-secondary);">${userName}</span>
+        </div>
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-primary);">Email:</strong> 
+            <span style="color: var(--text-secondary);">${userEmail}</span>
+        </div>
+        <div>
+            <strong style="color: var(--text-primary);">Role:</strong> 
+            <span class="badge badge-${isAdmin ? 'admin' : 'user'}" style="margin-left: 0.5rem;">${userRole.toUpperCase()}</span>
+        </div>
+    `;
+
+            // Show/hide admin warning
+            document.getElementById('adminWarning').style.display = isAdmin ? 'block' : 'none';
+
+            // Show modal
+            document.getElementById('deactivateModal').classList.add('show');
+        }
+
+        function closeDeactivateModal() {
+            document.getElementById('deactivateModal').classList.remove('show');
+            deactivateUserId = null;
+            deactivateUserIsAdmin = false;
+        }
+
+        function reactivateUser(userId, userName, isAdmin) {
+            reactivateUserId = userId;
+            reactivateUserName = userName;
+            reactivateUserIsAdmin = isAdmin;
+
+            const row = document.getElementById(`user-row-${userId}`);
+            if (!row) {
+                showToast('User not found', 'error');
+                return;
+            }
+
+            // FIX: Better way to get user name
+            const userNameElement = row.querySelector('.user-name');
+            let extractedName = userNameElement.textContent;
+            const badges = userNameElement.querySelectorAll('.badge');
+            badges.forEach(badge => {
+                extractedName = extractedName.replace(badge.textContent, '');
+            });
+            extractedName = extractedName.trim();
+
+            const userEmail = row.querySelector('.contact-info .fa-envelope').nextElementSibling.textContent;
+            const userRole = isAdmin ? 'Administrator' : 'Regular User';
+
+            document.getElementById('reactivateUserInfo').innerHTML = `
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-primary);">User:</strong> 
+            <span style="color: var(--text-secondary);">${extractedName}</span>
+        </div>
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-primary);">Email:</strong> 
+            <span style="color: var(--text-secondary);">${userEmail}</span>
+        </div>
+        <div>
+            <strong style="color: var(--text-primary);">Role:</strong> 
+            <span class="badge badge-${isAdmin ? 'admin' : 'user'}" style="margin-left: 0.5rem;">${userRole.toUpperCase()}</span>
+        </div>
+    `;
+
+            document.getElementById('reactivateModal').classList.add('show');
+        }
+
+        function closeReactivateModal() {
+            document.getElementById('reactivateModal').classList.remove('show');
+            reactivateUserId = null;
+            reactivateUserName = '';
+            reactivateUserIsAdmin = false;
+        }
+
+        // Handle the actual deactivation
+        document.getElementById('confirmDeactivateBtn').addEventListener('click', async function () {
+            if (!deactivateUserId) return;
+
+            // ✅ FIX: Save the user ID BEFORE closing modal
+            const userIdToDeactivate = deactivateUserId;
+
+            // Close modal
+            closeDeactivateModal();
+
+            try {
+                const response = await fetch('../api/deactivate_user.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: userIdToDeactivate })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const message = result.was_admin
+                        ? 'Administrator deactivated successfully!'
+                        : 'User deactivated successfully!';
+
+                    showToast(message, 'success');
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showToast(result.message || 'Failed to deactivate user', 'error');
+                }
+            } catch (error) {
+                console.error('Deactivate error:', error);
+                showToast('An error occurred while deactivating. Please try again.', 'error');
+            }
+        });
+
+        // Handle the actual reactivation
+        document.getElementById('confirmReactivateBtn').addEventListener('click', async function () {
+            if (!reactivateUserId) return;
+
+            // ✅ FIX: Save the user ID BEFORE closing modal
+            const userIdToReactivate = reactivateUserId;
+
+            // Close modal
+            closeReactivateModal();
+
+            try {
+                const response = await fetch('../api/reactivate_user.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: userIdToReactivate })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const message = result.was_admin
+                        ? 'Administrator reactivated successfully!'
+                        : 'User reactivated successfully!'
+
+                    showToast(message, 'success');
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showToast(result.message || 'Failed to reactivate user', 'error');
+                }
+            } catch (error) {
+                console.error('Reactivate error:', error);
+                showToast('An error occurred while reactivating. Please try again.', 'error');
+            }
+        });
+
+        console.log('✅ User management page loaded successfully');
+
+        // ============================================
+        // REAL-TIME VALIDATION FOR ADD USER MODAL
+        // ============================================
+
+        // Full Name real-time validation
+        const fullNameField = document.getElementById('fullName');
+        if (fullNameField) {
+            fullNameField.addEventListener('input', function () {
+                const value = this.value.trim();
+
+                if (value.length > 0) {
+                    if (value.length < 3) {
+                        showError('fullName', 'Must be at least 3 characters long');
+                    } else if (value.length > 100) {
+                        showError('fullName', 'Cannot exceed 100 characters');
+                    } else if (!/^[a-zA-ZÀ-ÿ\s.\-']+$/.test(value)) {
+                        showError('fullName', 'Only letters, spaces, hyphens, periods allowed');
+                    } else {
+                        clearError('fullName');
+                    }
+                } else {
+                    clearError('fullName');
+                }
+            });
+        }
+
+        // Email real-time validation
+        const emailField = document.getElementById('email');
+        if (emailField) {
+            emailField.addEventListener('input', function () {
+                const value = this.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (value.length > 0) {
+                    if (!emailRegex.test(value)) {
+                        showError('email', 'Please enter a valid email address');
+                    } else if (value.length > 255) {
+                        showError('email', 'Email address is too long');
+                    } else {
+                        clearError('email');
+                    }
+                } else {
+                    clearError('email');
+                }
+            });
+        }
+
+        // Phone real-time validation
+        const phoneField = document.getElementById('phone');
+        if (phoneField) {
+            phoneField.addEventListener('input', function () {
+                const value = this.value.trim();
+
+                if (value.length > 0) {
+                    const cleanPhone = value.replace(/[\s\-]/g, '');
+                    const phoneRegex = /^09[0-9]{9}$/;
+
+                    if (!phoneRegex.test(cleanPhone)) {
+                        showError('phone', 'Format: 09XXXXXXXXX (11 digits)');
+                    } else {
+                        clearError('phone');
+                    }
+                } else {
+                    clearError('phone');
+                }
+            });
+        }
+
+        // Password real-time validation
+        const passwordField = document.getElementById('password');
+        if (passwordField) {
+            passwordField.addEventListener('input', function () {
+                const value = this.value;
+
+                if (value.length > 0) {
+                    if (value.length < 8) {
+                        showError('password', 'Must be at least 8 characters');
+                    } else {
+                        const hasUppercase = /[A-Z]/.test(value);
+                        const hasLowercase = /[a-z]/.test(value);
+                        const hasNumber = /\d/.test(value);
+                        const hasSpecial = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;']/.test(value);
+
+                        if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+                            showError('password', 'Need: uppercase, lowercase, number, special char');
+                        } else {
+                            clearError('password');
                         }
                     }
-                    
-                    const message = result.was_admin 
-                        ? '✅ Administrator deleted successfully!\n\n📋 This action has been logged for audit purposes.'
-                        : '✅ User deleted successfully!';
-                    
-                    alert(message);
-                }, 300);
+                } else {
+                    clearError('password');
+                }
+            });
+        }
+
+        // Confirm Password real-time validation
+        const confirmPasswordField = document.getElementById('confirmPassword');
+        if (confirmPasswordField) {
+            confirmPasswordField.addEventListener('input', function () {
+                const password = document.getElementById('password').value;
+                const confirmPassword = this.value;
+
+                if (confirmPassword.length > 0) {
+                    if (password !== confirmPassword) {
+                        showError('confirmPassword', 'Passwords do not match');
+                    } else {
+                        clearError('confirmPassword');
+                    }
+                } else {
+                    clearError('confirmPassword');
+                }
+            });
+        }
+
+        // ============================================
+        // AJAX FILTER FUNCTIONALITY
+        // ============================================
+
+        document.getElementById('filterForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            loadFilteredUsers();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            currentPage = 1;
+            loadFilteredUsers();
+        });
+
+        function loadPage(page) {
+            currentPage = page;
+            loadFilteredUsers();
+        }
+
+        async function loadFilteredUsers() {
+            const role = document.getElementById('roleFilter').value;
+            const search = document.getElementById('searchFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            const params = new URLSearchParams();
+            params.append('page', currentPage);
+            if (role) params.append('role', role);
+            if (search) params.append('search', search);
+            if (status) params.append('status', status);
+            params.append('ajax', '1');
+
+            try {
+                const response = await fetch(`users.php?${params.toString()}`);
+                const html = await response.text();
+
+                // Parse the HTML response
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Update table
+                const newTable = doc.querySelector('#usersTableWrapper');
+                if (newTable) {
+                    document.getElementById('usersTableWrapper').innerHTML = newTable.innerHTML;
+                }
+
+                // Update pagination
+                const newPagination = doc.querySelector('#paginationWrapper');
+                if (newPagination) {
+                    document.getElementById('paginationWrapper').innerHTML = newPagination.innerHTML;
+                }
+
+                // Update stats
+                const newStats = {
+                    showing: doc.querySelector('#showingCount')?.textContent || '0',
+                    total: doc.querySelector('#totalCount')?.textContent || '0',
+                    totalUsers: doc.querySelector('#totalUsersCount')?.textContent || '0',
+                    admins: doc.querySelector('#adminsCount')?.textContent || '0',
+                    regularUsers: doc.querySelector('#regularUsersCount')?.textContent || '0',
+                    deactivated: doc.querySelector('#deactivatedCount')?.textContent || '0',
+                    managing: doc.querySelector('#managingCount')?.textContent || '0'
+                };
+
+                document.getElementById('showingCount').textContent = newStats.showing;
+                document.getElementById('totalCount').textContent = newStats.total;
+                document.getElementById('totalUsersCount').textContent = newStats.totalUsers;
+                document.getElementById('adminsCount').textContent = newStats.admins;
+                document.getElementById('regularUsersCount').textContent = newStats.regularUsers;
+                document.getElementById('deactivatedCount').textContent = newStats.deactivated;
+                document.getElementById('managingCount').textContent = newStats.managing;
+
+            } catch (error) {
+                console.error('Filter error:', error);
+                showToast('An error occurred while filtering. Please try again.', 'error');
+            }
+        }
+        // Show/hide department field based on role
+        document.getElementById('role').addEventListener('change', function () {
+            const departmentGroup = document.getElementById('departmentGroup');
+            const departmentSelect = document.getElementById('department');
+
+            if (this.value === 'department_admin') {
+                departmentGroup.style.display = 'block';
+                departmentSelect.required = true;
             } else {
-                alert('❌ Error: ' + result.message);
+                departmentGroup.style.display = 'none';
+                departmentSelect.required = false;
+                departmentSelect.value = '';
             }
-        } catch (error) { 
-            console.error('Delete error:', error);
-            alert('❌ An error occurred while deleting. Please try again.'); 
-        }
-    }
+        });
 
-    function updateStatsAfterDelete(userRole) {
-        const totalCount = document.getElementById('totalUsersCount');
-        if (totalCount) {
-            const current = parseInt(totalCount.textContent);
-            totalCount.textContent = Math.max(0, current - 1);
-        }
-        
-        if (userRole === 'admin') {
-            const adminsCount = document.getElementById('adminsCount');
-            if (adminsCount) {
-                const current = parseInt(adminsCount.textContent);
-                adminsCount.textContent = Math.max(0, current - 1);
-            }
-        } else {
-            const regularCount = document.getElementById('regularUsersCount');
-            if (regularCount) {
-                const current = parseInt(regularCount.textContent);
-                regularCount.textContent = Math.max(0, current - 1);
-            }
-        }
-    }
-
-    window.onclick = (e) => {
-        if (e.target == document.getElementById('userModal')) {
-            closeUserModal();
-        }
-    }
-
-    console.log('✅ User management page loaded successfully');
     </script>
 </body>
+
 </html>
 
 <?php include '../includes/footer.php'; ?>

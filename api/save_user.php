@@ -14,13 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
-$full_name = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
+$user_id = isset($_POST['user_id']) ? (int) $_POST['user_id'] : 0;
+$full_name = isset($_POST['name']) ? trim($_POST['name']) : '';
 $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-$phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+$phone = isset($_POST['mobile']) ? trim($_POST['mobile']) : '';
 $address = isset($_POST['address']) ? trim($_POST['address']) : '';
 $role = isset($_POST['role']) ? trim($_POST['role']) : 'user';
 $password = isset($_POST['password']) ? trim($_POST['password']) : '';
+// ✅ ADD THIS - Get department_id from POST
+$department_id = isset($_POST['department_id']) ? (int) $_POST['department_id'] : null;
 
 // Validation
 if (empty($full_name)) {
@@ -33,8 +35,15 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit();
 }
 
-if (!in_array($role, ['user', 'admin'])) {
+// ✅ UPDATE THIS - Add department_admin to valid roles
+if (!in_array($role, ['user', 'admin', 'department_admin', 'superadmin'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid role']);
+    exit();
+}
+
+// ✅ ADD THIS - Validate department for department_admin
+if ($role === 'department_admin' && empty($department_id)) {
+    echo json_encode(['success' => false, 'message' => 'Department is required for Department Admin role']);
     exit();
 }
 
@@ -49,47 +58,63 @@ try {
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
     $stmt->execute([$email, $user_id]);
     if ($stmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'Email already exists']);
+        echo json_encode(['success' => false, 'message' => 'Email address is already in use']);
         exit();
     }
-    
+
+    // Check if phone number already exists (if phone is provided)
+    if (!empty($phone)) {
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE mobile = ? AND id != ?");
+        $stmt->execute([$phone, $user_id]);
+        if ($stmt->fetch()) {
+            echo json_encode(['success' => false, 'message' => 'Mobile number is already in use']);
+            exit();
+        }
+    }
+
     if ($user_id > 0) {
-        // Update existing user
+        // ✅ UPDATE - Update existing user WITH department_id
         if (!empty($password)) {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("
                 UPDATE users 
-                SET name = ?, email = ?, mobile = ?, address = ?, role = ?, password = ?
+                SET name = ?, email = ?, mobile = ?, address = ?, role = ?, department_id = ?, password = ?, updated_at = NOW()
                 WHERE id = ?
             ");
-            $stmt->execute([$full_name, $email, $phone, $address, $role, $hashed_password, $user_id]);
+            $stmt->execute([$full_name, $email, $phone, $address, $role, $department_id, $hashed_password, $user_id]);
         } else {
             $stmt = $pdo->prepare("
                 UPDATE users 
-                SET name = ?, email = ?, mobile = ?, address = ?, role = ?
+                SET name = ?, email = ?, mobile = ?, address = ?, role = ?, department_id = ?, updated_at = NOW()
                 WHERE id = ?
             ");
-            $stmt->execute([$full_name, $email, $phone, $address, $role, $user_id]);
+            $stmt->execute([$full_name, $email, $phone, $address, $role, $department_id, $user_id]);
         }
-        
+
+        logActivity($_SESSION['user_id'], 'Update User', "Updated user: $full_name (ID: $user_id)");
+
         echo json_encode([
             'success' => true,
             'message' => 'User updated successfully',
             'user_id' => $user_id
         ]);
     } else {
-        // Create new user
+        // ✅ UPDATE - Create new user WITH department_id
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("
-            INSERT INTO users (name, email, mobile, address, password, role, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, NOW())
+            INSERT INTO users (name, email, mobile, address, password, role, department_id, is_active, is_verified, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, NOW())
         ");
-        $stmt->execute([$full_name, $email, $phone, $address, $hashed_password, $role]);
-                
+        $stmt->execute([$full_name, $email, $phone, $address, $hashed_password, $role, $department_id]);
+
+        $new_user_id = $pdo->lastInsertId();
+
+        logActivity($_SESSION['user_id'], 'Create User', "Created new user: $full_name (ID: $new_user_id)");
+
         echo json_encode([
             'success' => true,
             'message' => 'User created successfully',
-            'user_id' => $pdo->lastInsertId()
+            'user_id' => $new_user_id
         ]);
     }
 } catch (Exception $e) {

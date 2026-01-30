@@ -1,7 +1,6 @@
 <?php
-// FILE: api/get_services.php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/functions.php';
+// Remove the functions.php require and authentication check
 
 header('Content-Type: application/json');
 
@@ -44,3 +43,4 @@ try {
         'message' => 'Error fetching services: ' . $e->getMessage()
     ]);
 }
+?>

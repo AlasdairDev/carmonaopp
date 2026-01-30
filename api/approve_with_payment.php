@@ -76,7 +76,7 @@ try {
     
     // Add to status history
     $admin_id = $_SESSION['user_id'];
-    $history_remarks = $remarks . "\n\nPayment Required: ₱" . number_format($payment_amount, 2) . "\nDeadline: " . date('M d, Y h:i A', strtotime($payment_deadline));
+    $history_remarks = $remarks . "\n\nPayment Required: PHP " . number_format($payment_amount, 2) . "\nDeadline: " . date('M d, Y h:i A', strtotime($payment_deadline));
     
     $stmt = $pdo->prepare("
         INSERT INTO application_status_history (application_id, status, remarks, updated_by, created_at)
@@ -93,7 +93,7 @@ try {
     
     // Create notification
     $notif_title = 'Application Approved - Payment Required';
-    $notif_message = "Your application {$app['tracking_number']} has been approved! Please submit payment of ₱" . number_format($payment_amount, 2) . " within {$deadline_days} days (by " . date('M d, Y', strtotime($payment_deadline)) . ").";
+    $notif_message = "Your application {$app['tracking_number']} has been approved! Please submit payment of PHP " . number_format($payment_amount, 2) . " within {$deadline_days} days (by " . date('M d, Y', strtotime($payment_deadline)) . ").";
     
     $stmt = $pdo->prepare("
         INSERT INTO notifications (user_id, application_id, title, message, type, created_at)
@@ -108,11 +108,12 @@ try {
         try {
             $email_subject = "Application Approved - Payment Required [{$app['tracking_number']}]";
             
-            $email_body = "
+        $email_body = "
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='UTF-8'>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -253,7 +254,7 @@ try {
 <body>
     <div class='email-wrapper'>
         <div class='header'>
-            <h1>🎉 Application Approved!</h1>
+            <h1>Application Approved!</h1>
             <p>Payment Required</p>
         </div>
         
@@ -262,7 +263,7 @@ try {
             <p><strong>Great news!</strong> Your application has been approved.</p>
             
             <div class='info-box'>
-                <h3>📋 Application Details:</h3>
+                <h3>Application Details:</h3>
                 <table class='info-table'>
                     <tr>
                         <td>Tracking Number:</td>
@@ -274,17 +275,17 @@ try {
                     </tr>
                     <tr>
                         <td>Status:</td>
-                        <td><span class='status-approved'>✅ Approved</span></td>
+                        <td><span class='status-approved'>Approved</span></td>
                     </tr>
                 </table>
             </div>
             
             <div class='info-box' style='border-left-color: #FFA726; background: linear-gradient(135deg, #fff8e1, #ffecb3);'>
-                <h3>💰 Payment Required:</h3>
+                <h3>Payment Required:</h3>
                 <table class='info-table'>
                     <tr>
                         <td>Amount:</td>
-                        <td><span class='amount-highlight'>₱" . number_format($payment_amount, 2) . "</span></td>
+                        <td><span class='amount-highlight'>PHP " . number_format($payment_amount, 2) . "</span></td>
                     </tr>
                     <tr>
                         <td>Deadline:</td>
@@ -298,17 +299,17 @@ try {
             </div>
             
             <div class='payment-section'>
-                <h3>💳 Payment Instructions</h3>
+                <h3>Payment Instructions</h3>
                 <div class='payment-info'>
                     <p><strong>GCash Number:</strong> {$config['gcash_number']}</p>
                     <p><strong>Account Name:</strong> {$config['gcash_name']}</p>
-                    <p><strong>Amount to Send:</strong> ₱" . number_format($payment_amount, 2) . "</p>
+                    <p><strong>Amount to Send:</strong> PHP " . number_format($payment_amount, 2) . "</p>
                     <p><strong>Reference:</strong> {$app['tracking_number']}</p>
                 </div>
             </div>
             
             <div class='info-box'>
-                <h3>📝 After Payment:</h3>
+                <h3>After Payment:</h3>
                 <ol style='color: #333; line-height: 1.8; padding-left: 20px;'>
                     <li>Take a <strong>screenshot</strong> of your payment confirmation</li>
                     <li>Log in to your account</li>
@@ -320,16 +321,16 @@ try {
                 </ol>
             </div>
             
-            " . ($remarks ? "<div class='info-box' style='border-left-color: #2196F3;'><h3>📋 Admin Remarks:</h3><p style='color: #333; line-height: 1.7;'>" . nl2br(htmlspecialchars($remarks)) . "</p></div>" : "") . "
+            " . ($remarks ? "<div class='info-box' style='border-left-color: #2196F3;'><h3>Admin Remarks:</h3><p style='color: #333; line-height: 1.7;'>" . nl2br(htmlspecialchars($remarks)) . "</p></div>" : "") . "
             
             <div style='text-align: center;'>
                 <a href='" . BASE_URL . "/user/submit_payment.php?id={$app_id}' class='btn'>
-                    💰 Submit Payment Now
+                    Submit Payment Now
                 </a>
             </div>
             
             <div class='warning-box'>
-                <strong>⚠️ Important:</strong> Your payment must be received within <strong>{$deadline_days} days</strong>. Late payments may result in application cancellation.
+                <strong>Important:</strong> Your payment must be received within <strong>{$deadline_days} days</strong>. Late payments may result in application cancellation.
             </div>
             
             <p style='margin-top: 25px;'><strong>Thank you for using our service!</strong></p>
@@ -338,12 +339,12 @@ try {
         <div class='footer'>
             <p>This is an automated email from LGU Permit System.</p>
             <p>For questions, contact us at " . SMTP_FROM_EMAIL . "</p>
-            <p style='margin-top: 15px; color: #999;'>© " . date('Y') . " LGU Permit System. All rights reserved.</p>
+            <p style='margin-top: 15px; color: #999;'>&copy; " . date('Y') . " LGU Permit System. All rights reserved.</p>
         </div>
     </div>
 </body>
 </html>
-            ";
+";
             
             sendEmail($app['email'], $email_subject, $email_body);
         } catch (Exception $e) {
@@ -354,8 +355,7 @@ try {
     // Send SMS notification
     if ($send_sms && !empty($app['mobile'])) {
         try {
-            $sms_message = "Your application {$app['tracking_number']} is APPROVED! Payment required: ₱" . number_format($payment_amount, 2) . " within {$deadline_days} days. Pay via GCash to {$config['gcash_number']}. Ref: {$app['tracking_number']}";
-            sendSMS($app['mobile'], $sms_message);
+            $sms_message = "Your application {$app['tracking_number']} is APPROVED! Payment required: PHP " . number_format($payment_amount, 2) . " within {$deadline_days} days. Pay via GCash to {$config['gcash_number']}. Ref: {$app['tracking_number']}";
         } catch (Exception $e) {
             error_log("Failed to send approval SMS: " . $e->getMessage());
         }

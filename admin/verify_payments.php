@@ -1,25 +1,38 @@
 <?php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/functions.php';
+require_once '../includes/functions.php';
+require_once '../includes/security.php';  // ✅ ADD THIS
 
 if (!isLoggedIn() || !isAdmin()) {
     header('Location: ../login.php');
     exit();
 }
 
-// Get payment statistics
+// ✅ Get department filter properly
+$dept_filter_data = getDepartmentFilter('a');
+$dept_where = $dept_filter_data['where'] ? ' AND ' . $dept_filter_data['where'] : '';
+$dept_params = $dept_filter_data['params'];
+
+// ✅ Stats query with department filter
 $stats_query = "SELECT 
     COUNT(*) as total_payments,
     SUM(CASE WHEN payment_status = 'submitted' THEN 1 ELSE 0 END) as pending_verification,
     SUM(CASE WHEN payment_status = 'verified' THEN 1 ELSE 0 END) as verified,
     SUM(CASE WHEN payment_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
     SUM(CASE WHEN payment_status = 'submitted' THEN payment_amount ELSE 0 END) as pending_amount
-    FROM applications 
-    WHERE payment_required = 1";
-$stats = $pdo->query($stats_query)->fetch();
+    FROM applications a
+    WHERE payment_required = 1 $dept_where";
 
-// Get applications with submitted payments
-$stmt = $pdo->prepare("
+if (!empty($dept_params)) {
+    $stats_stmt = $pdo->prepare($stats_query);
+    $stats_stmt->execute($dept_params);
+    $stats = $stats_stmt->fetch();
+} else {
+    $stats = $pdo->query($stats_query)->fetch();
+}
+
+// ✅ Applications query with department filter
+$query = "
     SELECT a.*, 
            u.name as applicant_name,
            u.email,
@@ -30,11 +43,17 @@ $stmt = $pdo->prepare("
     JOIN users u ON a.user_id = u.id
     LEFT JOIN services s ON a.service_id = s.id
     LEFT JOIN departments d ON a.department_id = d.id
-    WHERE a.payment_status = 'submitted'
+    WHERE a.payment_status = 'submitted' $dept_where
     ORDER BY a.payment_submitted_at DESC
-");
-$stmt->execute();
-$pending_payments = $stmt->fetchAll();
+";
+
+if (!empty($dept_params)) {
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($dept_params);
+    $pending_payments = $stmt->fetchAll();
+} else {
+    $pending_payments = $pdo->query($query)->fetchAll();
+}
 
 $pageTitle = 'Verify Payments';
 include '../includes/header.php';
@@ -42,17 +61,53 @@ include '../includes/header.php';
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
+
+    <link rel="stylesheet" href="../assets/css/admin-responsive.css">
+    <link rel="stylesheet" href="../assets/css/admin/verify_payments_syles.css">
     <style>
+        /* ============================================
+   STANDARD ADMIN PAGE LAYOUT - v1.0
+   ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem 1.5rem 1.5rem !important;
+        }
+
+
         * {
             margin: 0;
             padding: 0;
@@ -88,7 +143,6 @@ include '../includes/header.php';
             padding: 0 1.5rem 1.5rem 1.5rem;
         }
 
-        /* Header */
         .page-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             border-radius: var(--radius);
@@ -107,12 +161,13 @@ include '../includes/header.php';
             right: 0;
             width: 300px;
             height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
             border-radius: 50%;
             transform: translate(30%, -30%);
         }
 
         .page-header h1 {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: 2rem;
             font-weight: 800;
             margin-bottom: 0.25rem;
@@ -183,7 +238,7 @@ include '../includes/header.php';
         }
 
         /* Payment List */
- 
+
 
         .payment-item {
             border-bottom: 2px solid var(--border);
@@ -293,7 +348,7 @@ include '../includes/header.php';
 
         .proof-preview:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
 
         .proof-preview img {
@@ -394,7 +449,8 @@ include '../includes/header.php';
         .btn-secondary {
             background: #e2e8f0;
             color: var(--text-primary);
-            border-radius: 8px;  /* Add or update this */
+            border-radius: 8px;
+            /* Add or update this */
         }
 
         .btn-secondary:hover {
@@ -404,7 +460,8 @@ include '../includes/header.php';
         .modal-actions .btn-secondary,
         .modal-actions .btn-danger,
         .modal-actions .btn-primary {
-            border-radius: 8px !important;  /* Force same radius for all modal buttons */
+            border-radius: 8px !important;
+            /* Force same radius for all modal buttons */
         }
 
         /* Badge */
@@ -450,7 +507,7 @@ include '../includes/header.php';
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
             z-index: 1000;
             align-items: center;
@@ -470,7 +527,7 @@ include '../includes/header.php';
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
         .modal-header {
@@ -550,7 +607,8 @@ include '../includes/header.php';
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.75rem;
             margin-top: 1.5rem;
-            align-items: center;  /* Add this */
+            align-items: center;
+            /* Add this */
         }
 
         .modal-actions .btn {
@@ -563,8 +621,10 @@ include '../includes/header.php';
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;  /* Match the border radius */
-            align-self: center;  /* Ensure vertical alignment */
+            border-radius: 8px;
+            /* Match the border radius */
+            align-self: center;
+            /* Ensure vertical alignment */
         }
 
         /* Image Modal */
@@ -585,34 +645,6 @@ include '../includes/header.php';
             height: auto;
             border-radius: var(--radius);
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 1rem 1rem 1rem;
-            }
-
-            .payment-proof {
-                grid-template-columns: 1fr;
-            }
-
-            .proof-preview {
-                width: 100%;
-            }
-
-            .proof-buttons {
-                flex-direction: column;
-            }
-
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
 
         /* Compact Payment Card */
         .payment-card-compact {
@@ -743,13 +775,13 @@ include '../includes/header.php';
             position: relative;
             flex-shrink: 0;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .proof-thumb:hover {
             border-color: var(--primary);
             transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .proof-thumb img {
@@ -764,7 +796,7 @@ include '../includes/header.php';
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -841,41 +873,133 @@ include '../includes/header.php';
             flex-shrink: 0;
         }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .payment-row {
-                grid-template-columns: 1fr;
-                gap: 1.25rem;
+        /* Custom Notification Modal */
+        .notify-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .notify-modal.show {
+            display: flex;
+        }
+
+        .notify-content {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            animation: modalPop 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
             }
 
-            .payment-info-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .proof-actions-section {
-                justify-content: space-between;
-                padding-top: 1rem;
-                border-top: 1px solid var(--border);
-            }
-
-            .action-btns-compact {
-                flex-direction: row;
+            to {
+                opacity: 1;
             }
         }
 
-        @media (max-width: 768px) {
-            .payment-info-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
+        @keyframes modalPop {
+            to {
+                transform: scale(1);
             }
+        }
 
-            .proof-thumb {
-                width: 80px;
-                height: 80px;
-            }
+        .notify-header {
+            padding: 2rem 2rem 1.5rem 2rem;
+            text-align: center;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .notify-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .notify-icon.success {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+            color: white;
+        }
+
+        .notify-icon.error {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .notify-icon.warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .notify-icon.question {
+            background: linear-gradient(135deg, #2196F3, #1976d2);
+            color: white;
+        }
+
+        .notify-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .notify-header p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .notify-body {
+            padding: 2rem;
+        }
+
+        .notify-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .notify-actions.single {
+            display: flex;
+            justify-content: center;
+        }
+
+        .notify-actions.single .btn {
+            width: auto;
+            min-width: 120px;
+        }
+
+
+        .notify-actions .btn {
+            margin: 0;
+            padding: 0.875rem 1.5rem;
+            font-size: 0.95rem;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Page Header -->
@@ -924,8 +1048,10 @@ include '../includes/header.php';
                                 <div class="applicant-details-sm">
                                     <h4><?php echo htmlspecialchars($payment['applicant_name']); ?></h4>
                                     <div class="meta-row">
-                                        <span><i class="fas fa-hashtag"></i> <?php echo htmlspecialchars($payment['tracking_number']); ?></span>
-                                        <span><i class="fas fa-briefcase"></i> <?php echo htmlspecialchars($payment['service_name']); ?></span>
+                                        <span><i class="fas fa-hashtag"></i>
+                                            <?php echo htmlspecialchars($payment['tracking_number']); ?></span>
+                                        <span><i class="fas fa-briefcase"></i>
+                                            <?php echo htmlspecialchars($payment['service_name']); ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -934,35 +1060,39 @@ include '../includes/header.php';
                             <div class="payment-info-grid">
                                 <div class="info-item-compact">
                                     <div class="info-label-compact">AMOUNT</div>
-                                    <div class="info-value-compact">₱<?php echo number_format($payment['payment_amount'], 2); ?></div>
+                                    <div class="info-value-compact">₱<?php echo number_format($payment['payment_amount'], 2); ?>
+                                    </div>
                                 </div>
                                 <div class="info-item-compact">
                                     <div class="info-label-compact">REFERENCE</div>
-                                    <div class="info-value-compact"><?php echo htmlspecialchars($payment['payment_reference']); ?></div>
+                                    <div class="info-value-compact">
+                                        <?php echo htmlspecialchars($payment['payment_reference']); ?>
+                                    </div>
                                 </div>
                                 <div class="info-item-compact">
                                     <div class="info-label-compact">SUBMITTED</div>
-                                    <div class="info-value-compact"><?php echo date('M d, h:i A', strtotime($payment['payment_submitted_at'])); ?></div>
+                                    <div class="info-value-compact">
+                                        <?php echo date('M d, h:i A', strtotime($payment['payment_submitted_at'])); ?>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Right: Proof & Actions -->
                             <div class="proof-actions-section">
-                                <div class="proof-thumb" onclick="viewImage('<?php echo htmlspecialchars($payment['payment_proof']); ?>')">
+                                <div class="proof-thumb"
+                                    onclick="viewImage('<?php echo htmlspecialchars($payment['payment_proof']); ?>')">
                                     <img src="../<?php echo htmlspecialchars($payment['payment_proof']); ?>" alt="Proof">
                                     <div class="thumb-overlay">
                                         <i class="fas fa-search-plus"></i>
                                     </div>
                                 </div>
                                 <div class="action-btns-compact">
-                                    <button onclick="verifyPayment(<?php echo $payment['id']; ?>)" 
-                                            class="btn-compact btn-verify" 
-                                            title="Verify Payment">
+                                    <button onclick="verifyPayment(<?php echo $payment['id']; ?>)"
+                                        class="btn-compact btn-verify" title="Verify Payment">
                                         <i class="fas fa-check"></i>
                                     </button>
-                                    <button onclick="openRejectModal(<?php echo $payment['id']; ?>)" 
-                                            class="btn-compact btn-reject" 
-                                            title="Reject Payment">
+                                    <button onclick="openRejectModal(<?php echo $payment['id']; ?>)"
+                                        class="btn-compact btn-reject" title="Reject Payment">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
@@ -989,16 +1119,16 @@ include '../includes/header.php';
                 <h3>❌ Reject Payment</h3>
                 <button class="close-modal" onclick="closeRejectModal()">&times;</button>
             </div>
-            
+
             <form id="rejectForm">
                 <input type="hidden" name="app_id" id="reject_app_id">
-                
+
                 <div class="form-group">
                     <label>Rejection Reason <span style="color: red;">*</span></label>
-                    <textarea name="rejection_reason" id="rejection_reason" class="form-control" required 
-                              placeholder="Explain why this payment is being rejected..."></textarea>
+                    <textarea name="rejection_reason" id="rejection_reason" class="form-control" required
+                        placeholder="Explain why this payment is being rejected..."></textarea>
                 </div>
-                
+
                 <div class="modal-actions">
                     <button type="button" onclick="closeRejectModal()" class="btn btn-secondary">
                         Cancel
@@ -1018,91 +1148,228 @@ include '../includes/header.php';
         </div>
     </div>
 
+    <!-- Notification Modal -->
+    <div id="notifyModal" class="notify-modal">
+        <div class="notify-content">
+            <div class="notify-header">
+                <div class="notify-icon" id="notifyIcon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h3 id="notifyTitle">Success</h3>
+                <p id="notifyMessage">Operation completed successfully</p>
+            </div>
+            <div class="notify-body">
+                <div class="notify-actions" id="notifyActions">
+                    <button class="btn btn-primary" id="notifyOkBtn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-    function viewImage(path) {
-        document.getElementById('modalImage').src = '../' + path;
-        document.getElementById('imageModal').classList.add('show');
-    }
-
-    function closeImageModal() {
-        document.getElementById('imageModal').classList.remove('show');
-    }
-
-    function openRejectModal(appId) {
-        document.getElementById('reject_app_id').value = appId;
-        document.getElementById('rejectModal').classList.add('show');
-    }
-
-    function closeRejectModal() {
-        document.getElementById('rejectModal').classList.remove('show');
-        document.getElementById('rejectForm').reset();
-    }
-
-    async function verifyPayment(appId) {
-        if (!confirm('✅ Are you sure you want to verify this payment?')) {
-            return;
+        function viewImage(path) {
+            document.getElementById('modalImage').src = '../' + path;
+            document.getElementById('imageModal').classList.add('show');
         }
-        
-        try {
-            const response = await fetch('../api/verify_payment.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `app_id=${appId}&action=verify`
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('show');
+        }
+
+        function openRejectModal(appId) {
+            document.getElementById('reject_app_id').value = appId;
+            document.getElementById('rejectModal').classList.add('show');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.remove('show');
+            document.getElementById('rejectForm').reset();
+        }
+        async function verifyPayment(appId) {
+            showNotification({
+                type: 'question',
+                icon: 'question-circle',
+                title: 'Verify Payment',
+                message: 'Are you sure you want to verify this payment?',
+                showCancel: true,
+                confirmText: 'Yes, Verify',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    try {
+                        const response = await fetch('../api/verify_payment.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `app_id=${appId}&action=verify`
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showNotification({
+                                type: 'success',
+                                icon: 'check-circle',
+                                title: 'Payment Verified',
+                                message: data.message,
+                                onConfirm: () => location.reload()
+                            });
+                        } else {
+                            showNotification({
+                                type: 'error',
+                                icon: 'exclamation-circle',
+                                title: 'Error',
+                                message: data.message
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showNotification({
+                            type: 'error',
+                            icon: 'exclamation-triangle',
+                            title: 'Error',
+                            message: 'An error occurred. Please try again.'
+                        });
+                    }
+                }
             });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('✅ ' + data.message);
-                location.reload();
+        }
+
+        console.log('✅ Payment verification page loaded successfully');
+        // Custom Notification System
+        function showNotification(options) {
+            const modal = document.getElementById('notifyModal');
+            const icon = document.getElementById('notifyIcon');
+            const title = document.getElementById('notifyTitle');
+            const message = document.getElementById('notifyMessage');
+            const actions = document.getElementById('notifyActions');
+
+            // Set icon
+            icon.className = 'notify-icon ' + (options.type || 'success');
+            icon.innerHTML = `<i class="fas fa-${options.icon || 'check'}"></i>`;
+
+            // Set content
+            title.textContent = options.title || 'Notification';
+            message.textContent = options.message || '';
+
+            // Clear previous actions
+            actions.innerHTML = '';
+
+            // Add buttons
+            if (options.showCancel) {
+                actions.className = 'notify-actions';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-secondary';
+                cancelBtn.textContent = options.cancelText || 'Cancel';
+                cancelBtn.onclick = () => {
+                    closeNotification();
+                    if (options.onCancel) options.onCancel();
+                };
+
+                const confirmBtn = document.createElement('button');
+                // Use success (green) for question type, danger for error, primary for others
+                if (options.type === 'question') {
+                    confirmBtn.className = 'btn btn-success';
+                } else if (options.type === 'error') {
+                    confirmBtn.className = 'btn btn-danger';
+                } else {
+                    confirmBtn.className = 'btn btn-primary';
+                }
+                confirmBtn.textContent = options.confirmText || 'OK';
+                confirmBtn.onclick = () => {
+                    closeNotification();
+                    if (options.onConfirm) options.onConfirm();
+                };
+
+                actions.appendChild(cancelBtn);
+                actions.appendChild(confirmBtn);
             } else {
-                alert('❌ Error: ' + data.message);
+                actions.className = 'notify-actions single';
+
+                const okBtn = document.createElement('button');
+                // Use green button for success notifications
+                if (options.type === 'success') {
+                    okBtn.className = 'btn btn-success';
+                } else if (options.type === 'error') {
+                    okBtn.className = 'btn btn-danger';
+                } else {
+                    okBtn.className = 'btn btn-primary';
+                }
+                okBtn.textContent = 'OK';
+                okBtn.onclick = () => {
+                    closeNotification();
+                    if (options.onConfirm) options.onConfirm();
+                };
+
+                actions.appendChild(okBtn);
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ An error occurred. Please try again.');
-        }
-    }
 
-    document.getElementById('rejectForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        formData.append('action', 'reject');
-        
-        const submitBtn = document.getElementById('rejectBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        
-        try {
-            const response = await fetch('../api/verify_payment.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('✅ ' + data.message);
-                location.reload();
-            } else {
-                alert('❌ Error: ' + data.message);
+            modal.classList.add('show');
+        }
+
+        function closeNotification() {
+            document.getElementById('notifyModal').classList.remove('show');
+        }
+
+        // Close on backdrop click
+        document.getElementById('notifyModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeNotification();
+            }
+        });
+        document.getElementById('rejectForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            formData.append('action', 'reject');
+
+            const submitBtn = document.getElementById('rejectBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                const response = await fetch('../api/verify_payment.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeRejectModal();
+                    showNotification({
+                        type: 'success',
+                        icon: 'check-circle',
+                        title: 'Payment Rejected',
+                        message: data.message,
+                        onConfirm: () => location.reload()
+                    });
+                } else {
+                    showNotification({
+                        type: 'error',
+                        icon: 'exclamation-circle',
+                        title: 'Error',
+                        message: data.message
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-times"></i> Reject Payment';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification({
+                    type: 'error',
+                    icon: 'exclamation-triangle',
+                    title: 'Error',
+                    message: 'An error occurred. Please try again.'
+                });
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-times"></i> Reject Payment';
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ An error occurred. Please try again.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-times"></i> Reject Payment';
-        }
-    });
-
-    console.log('✅ Payment verification page loaded successfully');
+        });
     </script>
 </body>
+
 </html>
 
 <?php include '../includes/footer.php'; ?>

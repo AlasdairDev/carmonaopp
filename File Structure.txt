@@ -10,26 +10,31 @@ lgu-permit-tracking/
 ├── assets/
 │   ├── css/
 │   │   ├── style.css             # Main stylesheet
-│   │   └── admin.css             # Admin dashboard styles\
+│   │   ├── admin.css             # Admin dashboard styles\
+│   │   ├── admin-responsive.css
+│   │   ├── user-responsive.css
 │   │   └── apply-form.css        
-│   ├── js/
+│    js/
 │   │   ├── main.js               # Common functions
-│   │   ├── apply-form.js         # Form validation
+│   │   └── apply-form.js         # Form validation
+│   │   
 │   └── uploads/
 │       ├── documents/            # User uploaded documents
 │       └── permits/              # Generated permits
 │
 ├── auth/
+│   ├── forgot_password.php
+│   ├── reset_password.php
+│   ├── verify_email.php
 │   ├── login.php                 # Login page
 │   ├── register.php              # Registration page
-│   ├── logout.php                # Logout handler
+│   └── logout.php                # Logout handler
 │
 ├── includes/
 │   ├── email_templates
 │   ├── footer.php                # Common footer
 │   ├── functions.php
 │   ├── header.php                # Common header
-│   ├── qr_codes.php
 │   ├── security.php
 │   ├── send_email.php
 │   └── send_sms.php            
@@ -38,22 +43,19 @@ lgu-permit-tracking/
 │   ├── applications.php             
 │   ├── apply.php                 
 │   ├── dashboard.php
-│   ├── download_qr.php
 │   ├── notification.php          # Track application
 │   ├── profile.php               # User profile
 │   ├── submit_payment
 │   ├── track.php              
-│   ├── view_application.php              
-│   └──           # Application history
+│   └── view_application.php     
 │
 ├── admin
 │   ├── applications.php          # Manage applications
 │   ├── activity_logs.php       
-│   ├── check_email_log.php
+│   ├── check_email_and_sms_log.php
 │   ├── dashboard.php             # Admin dashboard  
 │   ├── debug_approval.php  
 │   ├── manage_departments.php
-│   ├── notifications.php
 │   ├── profile.php    
 │   ├── reports.php
 │   ├── users.php                 # User management
@@ -62,18 +64,26 @@ lgu-permit-tracking/
 │
 ├── api/
 │   ├── approve_with_payment.php
+│   ├── cancel_applications.php
 │   ├── clear_logs.php
 │   ├── create_notification.php
-│   ├── delete_user.php
+│   ├── deactivate_user.php
+│   ├── export_email_sms_logs.php
+│   ├── export_logs.php
+│   ├── export_report_pdf.php
 │   ├── get_departments.php
 │   ├── get_notifications.php 
-│   ├── get-services.php 
-│   ├── get-user.php
+│   ├── get_services.php 
+│   ├── get_user.php
 │   ├── mark_notification_read.php 
+│   ├── notification_stream.php
+│   ├── reactivate_user.php
 │   ├── save_user.php
 │   ├── submit_department_application.php    # Handle application submission
 │   ├── submit_payment.php
-│   ├── update-application.php
+│   ├── toggle_department.php
+│   ├── toggleservice_php
+│   ├── update_application.php
 │   └── verify_payment.php
 
 ├── database/

@@ -1,13 +1,10 @@
 <?php
-// FILE: api/get_departments.php
-// FIXED: Changed from MySQLi ($conn) to PDO ($pdo) for consistency
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/functions.php';
+// Remove the functions.php require and authentication check
 
 header('Content-Type: application/json');
 
 try {
-    // FIXED: Using $pdo instead of $conn for consistency with rest of application
     $stmt = $pdo->prepare("
         SELECT 
             id,

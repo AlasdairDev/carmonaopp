@@ -196,7 +196,7 @@ if ($currentUser) {
             }
 
             .navbar {
-                padding: 0.75rem 1rem !important;
+                padding: 16px 0;
             }
 
             .navbar-brand {
@@ -310,7 +310,6 @@ if ($currentUser) {
                 margin: 0 0.25rem;
             }
         }
-
     </style>
 </head>
 <body>

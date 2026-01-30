@@ -1,447 +1,72 @@
-[2026-01-25 03:47:49] === UPDATE APPLICATION REQUEST ===
-[2026-01-25 03:47:49] POST: {"app_id":"10","status":"Completed","remarks":"","send_email":"1"}
-[2026-01-25 03:47:49] SESSION: user_id=3, role=admin
-[2026-01-25 03:47:49] app_id: 10, new_status: Completed, send_email: yes, send_sms: no
-[2026-01-25 03:47:49] Old status: Paid, New status: Completed
-[2026-01-25 03:47:49] Application updated successfully
-[2026-01-25 03:47:49] Status history added
-[2026-01-25 03:47:49] In-app notification created
-[2026-01-25 03:47:49] Transaction committed
-[2026-01-25 03:47:49] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-25 03:47:54] Email sent successfully
-[2026-01-25 03:47:54] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-25 06:55:13] === UPDATE APPLICATION REQUEST ===
-[2026-01-25 06:55:13] POST: {"app_id":"10","status":"Rejected","remarks":"","send_email":"1"}
-[2026-01-25 06:55:13] SESSION: user_id=3, role=admin
-[2026-01-25 06:55:13] app_id: 10, new_status: Rejected, send_email: yes, send_sms: no
-[2026-01-25 06:55:13] Old status: Completed, New status: Rejected
-[2026-01-25 06:55:13] Application updated successfully
-[2026-01-25 06:55:13] Status history added
-[2026-01-25 06:55:13] In-app notification created
-[2026-01-25 06:55:13] Transaction committed
-[2026-01-25 06:55:13] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-25 06:55:17] Email sent successfully
-[2026-01-25 06:55:17] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-25 07:05:36] === UPDATE APPLICATION REQUEST ===
-[2026-01-25 07:05:36] POST: {"app_id":"10","status":"Rejected","remarks":"","send_email":"1"}
-[2026-01-25 07:05:36] SESSION: user_id=3, role=admin
-[2026-01-25 07:05:36] app_id: 10, new_status: Rejected, send_email: yes, send_sms: no
-[2026-01-25 07:05:36] Old status: Rejected, New status: Rejected
-[2026-01-25 07:05:36] Transaction rolled back
-[2026-01-25 07:05:36] ERROR: No changes to update. Status is already Rejected
-[2026-01-25 07:05:36] Stack trace: #0 {main}
-[2026-01-25 07:05:40] === UPDATE APPLICATION REQUEST ===
-[2026-01-25 07:05:40] POST: {"app_id":"10","status":"Completed","remarks":"","send_email":"1"}
-[2026-01-25 07:05:40] SESSION: user_id=3, role=admin
-[2026-01-25 07:05:40] app_id: 10, new_status: Completed, send_email: yes, send_sms: no
-[2026-01-25 07:05:40] Old status: Rejected, New status: Completed
-[2026-01-25 07:05:40] Application updated successfully
-[2026-01-25 07:05:40] Status history added
-[2026-01-25 07:05:40] In-app notification created
-[2026-01-25 07:05:41] Transaction committed
-[2026-01-25 07:05:41] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-25 07:05:45] Email sent successfully
-[2026-01-25 07:05:45] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-25 04:32:20] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 04:32:20] POST: {"department_name":"63","service_name":"94","purpose":"bdfd","location":"","remarks":"","terms":"on","department_id":"63","service_id":"94"}
-[2026-01-25 04:32:20] FILES: ["compiled_document"]
-[2026-01-25 04:32:20] SESSION: {"user_id":2,"role":"user"}
-[2026-01-25 11:32:20] Config loaded
-[2026-01-25 11:32:20] Session check passed
-[2026-01-25 11:32:20] Request method check passed
-[2026-01-25 11:32:20] Data - Dept: 63, Service: 94, Purpose length: 4
-[2026-01-25 11:32:20] Validation passed
-[2026-01-25 11:32:20] File validation passed - 1-FOR-Capstone-Project-Concept-Paper-Guidelines.pdf
-[2026-01-25 11:32:20] Service found: Issuance of Certification
-[2026-01-25 11:32:20] Tracking number: CRMN-2026-549033
-[2026-01-25 11:32:20] File uploaded: assets/uploads/1-FOR-Capstone-Project-Concept-Paper-Guidelines_20260125_113220.pdf
-[2026-01-25 11:32:20] Application inserted: ID 12
-[2026-01-25 11:32:20] Document record inserted
-[2026-01-25 11:32:20] Notification created
-[2026-01-25 11:32:20] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 04:33:09] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 04:33:09] POST: {"department_name":"61","service_name":"92","purpose":"fvds","location":"","remarks":"","terms":"on","department_id":"61","service_id":"92"}
-[2026-01-25 04:33:09] FILES: ["compiled_document"]
-[2026-01-25 04:33:09] SESSION: {"user_id":2,"role":"user"}
-[2026-01-25 11:33:09] Config loaded
-[2026-01-25 11:33:09] Session check passed
-[2026-01-25 11:33:09] Request method check passed
-[2026-01-25 11:33:09] Data - Dept: 61, Service: 92, Purpose length: 4
-[2026-01-25 11:33:09] Validation passed
-[2026-01-25 11:33:09] File validation passed - 1-FOR-Capstone-Project-Concept-Paper-Guidelines.pdf
-[2026-01-25 11:33:09] Service found: Request Data for Thesis/Research
-[2026-01-25 11:33:09] Tracking number: CRMN-2026-292881
-[2026-01-25 11:33:09] File uploaded: assets/uploads/1-FOR-Capstone-Project-Concept-Paper-Guidelines_20260125_113309.pdf
-[2026-01-25 11:33:09] Application inserted: ID 13
-[2026-01-25 11:33:09] Document record inserted
-[2026-01-25 11:33:09] Notification created
-[2026-01-25 11:33:09] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 04:33:34] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 04:33:34] POST: {"department_name":"66","service_name":"97","purpose":"fsd","location":"sac","remarks":"","terms":"on","department_id":"66","service_id":"97"}
-[2026-01-25 04:33:34] FILES: ["compiled_document"]
-[2026-01-25 04:33:34] SESSION: {"user_id":2,"role":"user"}
-[2026-01-25 11:33:34] Config loaded
-[2026-01-25 11:33:34] Session check passed
-[2026-01-25 11:33:34] Request method check passed
-[2026-01-25 11:33:34] Data - Dept: 66, Service: 97, Purpose length: 3
-[2026-01-25 11:33:34] Validation passed
-[2026-01-25 11:33:34] File validation passed - 1-FOR-Capstone-Project-Concept-Paper-Guidelines.pdf
-[2026-01-25 11:33:34] Service found: DTI Business Name Registration (New)
-[2026-01-25 11:33:34] Tracking number: CRMN-2026-768709
-[2026-01-25 11:33:34] File uploaded: assets/uploads/1-FOR-Capstone-Project-Concept-Paper-Guidelines_20260125_113334.pdf
-[2026-01-25 11:33:34] Application inserted: ID 14
-[2026-01-25 11:33:34] Document record inserted
-[2026-01-25 11:33:34] Notification created
-[2026-01-25 11:33:34] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 08:01:41] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 08:01:41] POST: {"department_name":"61","service_name":"91","purpose":"hgh","location":"","remarks":"","terms":"on","department_id":"61","service_id":"91"}
-[2026-01-25 08:01:41] FILES: ["compiled_document"]
-[2026-01-25 08:01:41] SESSION: {"user_id":2,"role":"user"}
-[2026-01-25 15:01:41] Config loaded
-[2026-01-25 15:01:41] Session check passed
-[2026-01-25 15:01:41] Request method check passed
-[2026-01-25 15:01:41] Data - Dept: 61, Service: 91, Purpose length: 3
-[2026-01-25 15:01:41] Validation passed
-[2026-01-25 15:01:41] File validation passed - 1-FOR-Capstone-Project-Concept-Paper-Guidelines.pdf
-[2026-01-25 15:01:41] Service found: Feedback Processing
-[2026-01-25 15:01:41] Tracking number: CRMN-2026-976696
-[2026-01-25 15:01:41] File uploaded: assets/uploads/1-FOR-Capstone-Project-Concept-Paper-Guidelines_20260125_150141.pdf
-[2026-01-25 15:01:41] Application inserted: ID 15
-[2026-01-25 15:01:41] Document record inserted
-[2026-01-25 15:01:41] Notification created
-[2026-01-25 15:01:41] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 19:17:55] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 19:17:55] POST: {"department_name":"62","service_name":"93","purpose":"42","location":"","remarks":"","terms":"on","department_id":"62","service_id":"93"}
-[2026-01-25 19:17:55] FILES: ["compiled_document"]
-[2026-01-25 19:17:55] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 02:17:55] Config loaded
-[2026-01-26 02:17:55] Session check passed
-[2026-01-26 02:17:55] Request method check passed
-[2026-01-26 02:17:55] Data - Dept: 62, Service: 93, Purpose length: 2
-[2026-01-26 02:17:55] Validation passed
-[2026-01-26 02:17:55] File validation passed - Topic 2.pdf
-[2026-01-26 02:17:55] Service found: Tricycle Franchise Dropping
-[2026-01-26 02:17:55] Tracking number: CRMN-2026-667120
-[2026-01-26 02:17:55] File uploaded: assets/uploads/Topic_2_20260126_021755.pdf
-[2026-01-26 02:17:55] Application inserted: ID 14
-[2026-01-26 02:17:55] Document record inserted
-[2026-01-26 02:17:55] ERROR: SQLSTATE[HY093]: Invalid parameter number
-[2026-01-26 02:17:55] Stack trace: #0 C:\xampp\htdocs\carmonaopp\api\submit_department_application.php(242): PDOStatement->execute(Array)
-#1 {main}
-[2026-01-25 19:18:09] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 19:18:09] POST: {"department_name":"62","service_name":"93","purpose":"42","location":"","remarks":"","terms":"on","department_id":"62","service_id":"93"}
-[2026-01-25 19:18:09] FILES: ["compiled_document"]
-[2026-01-25 19:18:09] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 02:18:09] Config loaded
-[2026-01-26 02:18:09] Session check passed
-[2026-01-26 02:18:09] Request method check passed
-[2026-01-26 02:18:09] Data - Dept: 62, Service: 93, Purpose length: 2
-[2026-01-26 02:18:09] Validation passed
-[2026-01-26 02:18:09] File validation passed - Topic 2.pdf
-[2026-01-26 02:18:09] Service found: Tricycle Franchise Dropping
-[2026-01-26 02:18:09] Tracking number: CRMN-2026-462816
-[2026-01-26 02:18:09] File uploaded: assets/uploads/Topic_2_20260126_021809.pdf
-[2026-01-26 02:18:09] Application inserted: ID 15
-[2026-01-26 02:18:09] Document record inserted
-[2026-01-26 02:18:09] Notification created
-[2026-01-26 02:18:09] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 19:21:31] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 19:21:31] POST: {"department_name":"31","service_name":"88","purpose":"r","location":"","remarks":"","terms":"on","department_id":"31","service_id":"88"}
-[2026-01-25 19:21:31] FILES: ["compiled_document"]
-[2026-01-25 19:21:31] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 02:21:31] Config loaded
-[2026-01-26 02:21:31] Session check passed
-[2026-01-26 02:21:31] Request method check passed
-[2026-01-26 02:21:31] Data - Dept: 31, Service: 88, Purpose length: 1
-[2026-01-26 02:21:31] Validation passed
-[2026-01-26 02:21:31] File validation passed - Topic 2.pdf
-[2026-01-26 02:21:31] Service found: OTR (Occupational Tax Receipt)
-[2026-01-26 02:21:31] Tracking number: CRMN-2026-053670
-[2026-01-26 02:21:31] File uploaded: assets/uploads/Topic_2_20260126_022131.pdf
-[2026-01-26 02:21:31] Application inserted: ID 16
-[2026-01-26 02:21:31] Document record inserted
-[2026-01-26 02:21:31] User notification created
-[2026-01-26 02:21:31] Admin notifications created for 1 admins
-[2026-01-26 02:21:31] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 23:02:37] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 23:02:37] POST: {"department_name":"64","service_name":"95","purpose":"2","location":"","remarks":"","terms":"on","department_id":"64","service_id":"95"}
-[2026-01-25 23:02:37] FILES: ["compiled_document"]
-[2026-01-25 23:02:37] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 06:02:37] Config loaded
-[2026-01-26 06:02:37] Session check passed
-[2026-01-26 06:02:37] Request method check passed
-[2026-01-26 06:02:37] Data - Dept: 64, Service: 95, Purpose length: 1
-[2026-01-26 06:02:37] Validation passed
-[2026-01-26 06:02:37] File validation passed - Report_2026-01-01_to_2026-01-31.pdf
-[2026-01-26 06:02:37] Service found: Evaluation and Recommendation for Electrical and Water Connection
-[2026-01-26 06:02:37] Tracking number: CRMN-2026-315126
-[2026-01-26 06:02:37] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31_20260126_060237.pdf
-[2026-01-26 06:02:37] Application inserted: ID 17
-[2026-01-26 06:02:37] Document record inserted
-[2026-01-26 06:02:37] User notification created
-[2026-01-26 06:02:37] Admin notifications created for 1 admins
-[2026-01-26 06:02:37] === SUBMISSION SUCCESSFUL ===
-[2026-01-26 06:03:11] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 06:03:11] POST: {"app_id":"17","status":"Processing","remarks":"","send_email":"1"}
-[2026-01-26 06:03:11] SESSION: user_id=3, role=admin
-[2026-01-26 06:03:11] app_id: 17, new_status: Processing, send_email: yes, send_sms: no
-[2026-01-26 06:03:11] Old status: Pending, New status: Processing
-[2026-01-26 06:03:11] Application updated successfully
-[2026-01-26 06:03:11] Status history added
-[2026-01-26 06:03:11] In-app notification created
-[2026-01-26 06:03:11] Transaction committed
-[2026-01-26 06:03:11] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 06:03:15] Email sent successfully
-[2026-01-26 06:03:15] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 06:04:08] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 06:04:08] POST: {"app_id":"17","status":"Approved","remarks":"","send_email":"1"}
-[2026-01-26 06:04:08] SESSION: user_id=3, role=admin
-[2026-01-26 06:04:08] app_id: 17, new_status: Approved, send_email: yes, send_sms: no
-[2026-01-26 06:04:08] Old status: Processing, New status: Approved
-[2026-01-26 06:04:08] Application updated successfully
-[2026-01-26 06:04:08] Status history added
-[2026-01-26 06:04:08] In-app notification created
-[2026-01-26 06:04:08] Transaction committed
-[2026-01-26 06:04:08] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 06:04:12] Email sent successfully
-[2026-01-26 06:04:12] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-25 23:04:58] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 23:04:58] POST: {"department_name":"63","service_name":"94","purpose":"2","location":"","remarks":"","terms":"on","department_id":"63","service_id":"94"}
-[2026-01-25 23:04:58] FILES: ["compiled_document"]
-[2026-01-25 23:04:58] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 06:04:58] Config loaded
-[2026-01-26 06:04:58] Session check passed
-[2026-01-26 06:04:58] Request method check passed
-[2026-01-26 06:04:58] Data - Dept: 63, Service: 94, Purpose length: 1
-[2026-01-26 06:04:58] Validation passed
-[2026-01-26 06:04:58] File validation passed - Report_2026-01-01_to_2026-01-31.pdf
-[2026-01-26 06:04:58] Service found: Issuance of Certification
-[2026-01-26 06:04:58] Tracking number: CRMN-2026-931368
-[2026-01-26 06:04:58] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31_20260126_060458.pdf
-[2026-01-26 06:04:58] Application inserted: ID 18
-[2026-01-26 06:04:58] Document record inserted
-[2026-01-26 06:04:58] User notification created
-[2026-01-26 06:04:58] Admin notifications created for 1 admins
-[2026-01-26 06:04:58] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 23:27:21] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 23:27:21] POST: {"department_name":"31","service_name":"88","purpose":"42","location":"","remarks":"","terms":"on","department_id":"31","service_id":"88"}
-[2026-01-25 23:27:21] FILES: ["compiled_document"]
-[2026-01-25 23:27:21] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 06:27:21] Config loaded
-[2026-01-26 06:27:21] Session check passed
-[2026-01-26 06:27:21] Request method check passed
-[2026-01-26 06:27:21] Data - Dept: 31, Service: 88, Purpose length: 2
-[2026-01-26 06:27:21] Validation passed
-[2026-01-26 06:27:21] File validation passed - Report_2026-01-01_to_2026-01-31.pdf
-[2026-01-26 06:27:21] Service found: OTR (Occupational Tax Receipt)
-[2026-01-26 06:27:21] Tracking number: CRMN-2026-355514
-[2026-01-26 06:27:21] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31_20260126_062721.pdf
-[2026-01-26 06:27:21] Application inserted: ID 19
-[2026-01-26 06:27:21] Document record inserted
-[2026-01-26 06:27:21] User notification created
-[2026-01-26 06:27:21] Admin notifications created for 1 admins
-[2026-01-26 06:27:21] === SUBMISSION SUCCESSFUL ===
-[2026-01-25 23:27:38] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 23:27:38] POST: {"department_name":"64","service_name":"95","purpose":"2321","location":"","remarks":"","terms":"on","department_id":"64","service_id":"95"}
-[2026-01-25 23:27:38] FILES: ["compiled_document"]
-[2026-01-25 23:27:38] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 06:27:38] Config loaded
-[2026-01-26 06:27:38] Session check passed
-[2026-01-26 06:27:38] Request method check passed
-[2026-01-26 06:27:38] Data - Dept: 64, Service: 95, Purpose length: 4
-[2026-01-26 06:27:38] Validation passed
-[2026-01-26 06:27:38] File validation passed - Report_2026-01-01_to_2026-01-31.pdf
-[2026-01-26 06:27:38] Service found: Evaluation and Recommendation for Electrical and Water Connection
-[2026-01-26 06:27:38] Tracking number: CRMN-2026-847773
-[2026-01-26 06:27:38] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31_20260126_062738.pdf
-[2026-01-26 06:27:38] Application inserted: ID 20
-[2026-01-26 06:27:38] Document record inserted
-[2026-01-26 06:27:38] User notification created
-[2026-01-26 06:27:38] Admin notifications created for 1 admins
-[2026-01-26 06:27:38] === SUBMISSION SUCCESSFUL ===
-[2026-01-26 06:28:30] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 06:28:30] POST: {"app_id":"20","status":"Approved","remarks":"","send_email":"1"}
-[2026-01-26 06:28:30] SESSION: user_id=3, role=admin
-[2026-01-26 06:28:30] app_id: 20, new_status: Approved, send_email: yes, send_sms: no
-[2026-01-26 06:28:30] Old status: Pending, New status: Approved
-[2026-01-26 06:28:30] Application updated successfully
-[2026-01-26 06:28:30] Status history added
-[2026-01-26 06:28:30] In-app notification created
-[2026-01-26 06:28:30] Transaction committed
-[2026-01-26 06:28:30] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 06:28:34] Email sent successfully
-[2026-01-26 06:28:34] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-25 23:50:20] === NEW APPLICATION SUBMISSION ===
-[2026-01-25 23:50:20] POST: {"department_name":"63","service_name":"94","purpose":"f","location":"","remarks":"fasdf","terms":"on","department_id":"63","service_id":"94"}
-[2026-01-25 23:50:20] FILES: ["compiled_document"]
-[2026-01-25 23:50:20] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 06:50:20] Config loaded
-[2026-01-26 06:50:20] Session check passed
-[2026-01-26 06:50:20] Request method check passed
-[2026-01-26 06:50:20] Data - Dept: 63, Service: 94, Purpose length: 1
-[2026-01-26 06:50:20] Validation passed
-[2026-01-26 06:50:20] File validation passed - Report_2026-01-01_to_2026-01-31.pdf
-[2026-01-26 06:50:20] Service found: Issuance of Certification
-[2026-01-26 06:50:20] Tracking number: CRMN-2026-690228
-[2026-01-26 06:50:20] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31_20260126_065020.pdf
-[2026-01-26 06:50:20] Application inserted: ID 21
-[2026-01-26 06:50:20] Document record inserted
-[2026-01-26 06:50:20] User notification created
-[2026-01-26 06:50:20] Admin notifications created for 1 admins
-[2026-01-26 06:50:20] === SUBMISSION SUCCESSFUL ===
-[2026-01-26 07:05:25] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:05:25] POST: {"app_id":"21","status":"Rejected","remarks":"","send_email":"1"}
-[2026-01-26 07:05:25] SESSION: user_id=3, role=admin
-[2026-01-26 07:05:25] app_id: 21, new_status: Rejected, send_email: yes, send_sms: no
-[2026-01-26 07:05:25] Old status: Approved, New status: Rejected
-[2026-01-26 07:05:25] Application updated successfully
-[2026-01-26 07:05:25] Status history added
-[2026-01-26 07:05:25] In-app notification created
-[2026-01-26 07:05:25] Transaction committed
-[2026-01-26 07:05:25] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 07:05:29] Email sent successfully
-[2026-01-26 07:05:29] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 00:34:11] === NEW APPLICATION SUBMISSION ===
-[2026-01-26 00:34:11] POST: {"department_name":"31","service_name":"87","purpose":"`rt31","location":"","remarks":"r31r13","terms":"on","department_id":"31","service_id":"87"}
-[2026-01-26 00:34:11] FILES: ["compiled_document"]
-[2026-01-26 00:34:11] SESSION: {"user_id":2,"role":"user"}
-[2026-01-26 07:34:11] Config loaded
-[2026-01-26 07:34:11] Session check passed
-[2026-01-26 07:34:11] Request method check passed
-[2026-01-26 07:34:11] Data - Dept: 31, Service: 87, Purpose length: 5
-[2026-01-26 07:34:11] Validation passed
-[2026-01-26 07:34:11] File validation passed - Report_2026-01-23_to_2026-01-24 (1).pdf
-[2026-01-26 07:34:11] Service found: Permit for Motorcade
-[2026-01-26 07:34:11] Tracking number: CRMN-2026-102477
-[2026-01-26 07:34:11] File uploaded: assets/uploads/Report_2026-01-23_to_2026-01-24__1__20260126_073411.pdf
-[2026-01-26 07:34:11] Application inserted: ID 22
-[2026-01-26 07:34:11] Document record inserted
-[2026-01-26 07:34:11] User notification created
-[2026-01-26 07:34:11] Admin notifications created for 1 admins
-[2026-01-26 07:34:11] === SUBMISSION SUCCESSFUL ===
-[2026-01-26 07:57:13] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:57:13] POST: {"app_id":"22","status":"Pending","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 07:57:13] SESSION: user_id=3, role=admin
-[2026-01-26 07:57:13] app_id: 22, new_status: Pending, send_email: yes, send_sms: yes
-[2026-01-26 07:57:13] Old status: Approved, New status: Pending
-[2026-01-26 07:57:13] Application updated successfully
-[2026-01-26 07:57:13] Status history added
-[2026-01-26 07:57:13] In-app notification created
-[2026-01-26 07:57:13] Transaction committed
-[2026-01-26 07:57:13] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 07:57:13] No email template found for status: Pending
-[2026-01-26 07:57:13] Attempting to send SMS to: 09690805901
-[2026-01-26 07:57:13] SMS sending failed
-[2026-01-26 07:57:13] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 07:57:17] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:57:17] POST: {"app_id":"22","status":"Pending","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 07:57:17] SESSION: user_id=3, role=admin
-[2026-01-26 07:57:17] app_id: 22, new_status: Pending, send_email: yes, send_sms: yes
-[2026-01-26 07:57:17] Old status: Pending, New status: Pending
-[2026-01-26 07:57:17] Transaction rolled back
-[2026-01-26 07:57:17] ERROR: No changes to update. Status is already Pending
-[2026-01-26 07:57:17] Stack trace: #0 {main}
-[2026-01-26 07:57:21] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:57:21] POST: {"app_id":"22","status":"Processing","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 07:57:21] SESSION: user_id=3, role=admin
-[2026-01-26 07:57:21] app_id: 22, new_status: Processing, send_email: yes, send_sms: yes
-[2026-01-26 07:57:21] Old status: Pending, New status: Processing
-[2026-01-26 07:57:21] Application updated successfully
-[2026-01-26 07:57:21] Status history added
-[2026-01-26 07:57:21] In-app notification created
-[2026-01-26 07:57:21] Transaction committed
-[2026-01-26 07:57:21] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 07:57:25] Email sent successfully
-[2026-01-26 07:57:25] Attempting to send SMS to: 09690805901
-[2026-01-26 07:57:26] SMS sending failed
-[2026-01-26 07:57:26] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 07:58:10] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:58:10] POST: {"app_id":"22","status":"Processing","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 07:58:10] SESSION: user_id=3, role=admin
-[2026-01-26 07:58:10] app_id: 22, new_status: Processing, send_email: yes, send_sms: yes
-[2026-01-26 07:58:10] Old status: Processing, New status: Processing
-[2026-01-26 07:58:10] Transaction rolled back
-[2026-01-26 07:58:10] ERROR: No changes to update. Status is already Processing
-[2026-01-26 07:58:10] Stack trace: #0 {main}
-[2026-01-26 07:58:32] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:58:32] POST: {"app_id":"22","status":"Rejected","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 07:58:32] SESSION: user_id=3, role=admin
-[2026-01-26 07:58:32] app_id: 22, new_status: Rejected, send_email: yes, send_sms: yes
-[2026-01-26 07:58:32] Old status: Approved, New status: Rejected
-[2026-01-26 07:58:32] Application updated successfully
-[2026-01-26 07:58:32] Status history added
-[2026-01-26 07:58:32] In-app notification created
-[2026-01-26 07:58:32] Transaction committed
-[2026-01-26 07:58:32] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 07:58:36] Email sent successfully
-[2026-01-26 07:58:36] Attempting to send SMS to: 09690805901
-[2026-01-26 07:58:37] SMS sending failed
-[2026-01-26 07:58:37] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 07:58:40] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 07:58:40] POST: {"app_id":"22","status":"Rejected","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 07:58:40] SESSION: user_id=3, role=admin
-[2026-01-26 07:58:40] app_id: 22, new_status: Rejected, send_email: yes, send_sms: yes
-[2026-01-26 07:58:40] Old status: Rejected, New status: Rejected
-[2026-01-26 07:58:40] Transaction rolled back
-[2026-01-26 07:58:40] ERROR: No changes to update. Status is already Rejected
-[2026-01-26 07:58:40] Stack trace: #0 {main}
-[2026-01-26 08:01:36] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 08:01:36] POST: {"app_id":"22","status":"Pending","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 08:01:36] SESSION: user_id=3, role=admin
-[2026-01-26 08:01:36] app_id: 22, new_status: Pending, send_email: yes, send_sms: yes
-[2026-01-26 08:01:36] Old status: Approved, New status: Pending
-[2026-01-26 08:01:36] Application updated successfully
-[2026-01-26 08:01:36] Status history added
-[2026-01-26 08:01:36] In-app notification created
-[2026-01-26 08:01:36] Transaction committed
-[2026-01-26 08:01:36] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 08:01:36] No email template found for status: Pending
-[2026-01-26 08:01:36] Attempting to send SMS to: 09690805901
-[2026-01-26 08:01:36] SMS sending failed
-[2026-01-26 08:01:36] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 08:29:06] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 08:29:06] POST: {"app_id":"22","status":"Rejected","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 08:29:06] SESSION: user_id=3, role=admin
-[2026-01-26 08:29:06] app_id: 22, new_status: Rejected, send_email: yes, send_sms: yes
-[2026-01-26 08:29:06] Old status: Approved, New status: Rejected
-[2026-01-26 08:29:06] Application updated successfully
-[2026-01-26 08:29:06] Status history added
-[2026-01-26 08:29:06] In-app notification created
-[2026-01-26 08:29:06] Transaction committed
-[2026-01-26 08:29:06] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 08:29:10] Email sent successfully
-[2026-01-26 08:29:10] Attempting to send SMS to: 09690805901
-[2026-01-26 08:29:10] SMS sending failed
-[2026-01-26 08:29:10] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 08:29:28] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 08:29:28] POST: {"app_id":"22","status":"Completed","remarks":"","send_email":"1"}
-[2026-01-26 08:29:28] SESSION: user_id=3, role=admin
-[2026-01-26 08:29:28] app_id: 22, new_status: Completed, send_email: yes, send_sms: no
-[2026-01-26 08:29:29] ERROR: ❌ Cannot mark as Completed: Payment must be verified first! Please go to "Verify Payments" page to confirm the payment before completing this application.
-[2026-01-26 08:29:29] Stack trace: #0 {main}
-[2026-01-26 08:30:03] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 08:30:03] POST: {"app_id":"22","status":"Processing","remarks":"","send_email":"1"}
-[2026-01-26 08:30:03] SESSION: user_id=3, role=admin
-[2026-01-26 08:30:03] app_id: 22, new_status: Processing, send_email: yes, send_sms: no
-[2026-01-26 08:30:03] Old status: Approved, New status: Processing
-[2026-01-26 08:30:03] Application updated successfully
-[2026-01-26 08:30:03] Status history added
-[2026-01-26 08:30:03] In-app notification created
-[2026-01-26 08:30:03] Transaction committed
-[2026-01-26 08:30:03] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 08:30:08] Email sent successfully
-[2026-01-26 08:30:08] === UPDATE COMPLETED SUCCESSFULLY ===
-[2026-01-26 08:37:48] === UPDATE APPLICATION REQUEST ===
-[2026-01-26 08:37:48] POST: {"app_id":"22","status":"Rejected","remarks":"","send_email":"1","send_sms":"1"}
-[2026-01-26 08:37:48] SESSION: user_id=3, role=admin
-[2026-01-26 08:37:48] app_id: 22, new_status: Rejected, send_email: yes, send_sms: yes
-[2026-01-26 08:37:48] Old status: Approved, New status: Rejected
-[2026-01-26 08:37:48] Application updated successfully
-[2026-01-26 08:37:48] Status history added
-[2026-01-26 08:37:48] In-app notification created
-[2026-01-26 08:37:48] Transaction committed
-[2026-01-26 08:37:48] Attempting to send email to: keithjustine57@gmail.com
-[2026-01-26 08:37:52] Email sent successfully
-[2026-01-26 08:37:52] Attempting to send SMS to: 09690805901
-[2026-01-26 08:37:52] SMS sending failed
-[2026-01-26 08:37:52] === UPDATE COMPLETED SUCCESSFULLY ===
+[2026-01-30 04:36:16] === NEW APPLICATION SUBMISSION ===
+[2026-01-30 04:36:16] POST: {"department_name":"63","service_name":"94","purpose":"4123","location":"4123","remarks":"412","terms":"on","department_id":"63","service_id":"94"}
+[2026-01-30 04:36:16] FILES: ["compiled_document"]
+[2026-01-30 04:36:16] SESSION: {"user_id":"none","role":"none"}
+[2026-01-30 11:36:16] Config loaded
+[2026-01-30 11:36:16] Session check passed
+[2026-01-30 11:36:16] Request method check passed
+[2026-01-30 11:36:16] Data - Dept: 63, Service: 94, Purpose length: 4
+[2026-01-30 11:36:16] Validation passed
+[2026-01-30 11:36:16] File upload status: No file uploaded
+[2026-01-30 11:36:16] Service found: Issuance of Certification
+[2026-01-30 11:36:16] Tracking number: CRMN-2026-211130
+[2026-01-30 11:36:16] No file uploaded - skipping file storage
+[2026-01-30 11:36:16] Application inserted: ID 81
+[2026-01-30 11:36:16] User notification created
+[2026-01-30 11:36:16] Found 2 admins for department 63
+[2026-01-30 11:36:16] Admin notifications created for 2 admins
+[2026-01-30 11:36:16] === SUBMISSION SUCCESSFUL ===
+[2026-01-30 04:40:00] === NEW APPLICATION SUBMISSION ===
+[2026-01-30 04:40:00] POST: {"department_name":"66","service_name":"101","purpose":"5123","location":"","remarks":"4213","terms":"on","department_id":"66","service_id":"101"}
+[2026-01-30 04:40:00] FILES: ["compiled_document"]
+[2026-01-30 04:40:00] SESSION: {"user_id":"none","role":"none"}
+[2026-01-30 11:40:00] Config loaded
+[2026-01-30 11:40:00] Session check passed
+[2026-01-30 11:40:00] Request method check passed
+[2026-01-30 11:40:00] Data - Dept: 66, Service: 101, Purpose length: 4
+[2026-01-30 11:40:00] Validation passed
+[2026-01-30 11:40:00] File validation passed - Report_2026-01-01_to_2026-01-31 (2).pdf
+[2026-01-30 11:40:00] File upload status: File uploaded
+[2026-01-30 11:40:00] Service found: Endorsement Letter for Manila Southwoods RFID Tag/Car Sticker
+[2026-01-30 11:40:00] Tracking number: CRMN-2026-275267
+[2026-01-30 11:40:00] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31__2__20260130_114000.pdf
+[2026-01-30 11:40:00] Application inserted: ID 82
+[2026-01-30 11:40:00] Document record inserted
+[2026-01-30 11:40:00] User notification created
+[2026-01-30 11:40:00] Found 2 admins for department 66
+[2026-01-30 11:40:00] Admin notifications created for 2 admins
+[2026-01-30 11:40:00] === SUBMISSION SUCCESSFUL ===
+[2026-01-30 08:02:03] === NEW APPLICATION SUBMISSION ===
+[2026-01-30 08:02:03] POST: {"department_name":"32","service_name":"90","purpose":"I want to enter the sorteo pageant.","location":"","remarks":"","terms":"on","department_id":"32","service_id":"90"}
+[2026-01-30 08:02:03] FILES: ["compiled_document"]
+[2026-01-30 08:02:03] SESSION: {"user_id":"none","role":"none"}
+[2026-01-30 15:02:03] Config loaded
+[2026-01-30 15:02:03] Session check passed
+[2026-01-30 15:02:03] Request method check passed
+[2026-01-30 15:02:03] Data - Dept: 32, Service: 90, Purpose length: 35
+[2026-01-30 15:02:03] Validation passed
+[2026-01-30 15:02:03] File validation passed - Report_2026-01-01_to_2026-01-31.pdf
+[2026-01-30 15:02:03] File upload status: File uploaded
+[2026-01-30 15:02:03] Service found: Sorteo ng Carmona Registration
+[2026-01-30 15:02:03] Tracking number: CRMN-2026-366359
+[2026-01-30 15:02:03] File uploaded: assets/uploads/Report_2026-01-01_to_2026-01-31_20260130_150203.pdf
+[2026-01-30 15:02:03] Application inserted: ID 83
+[2026-01-30 15:02:03] Document record inserted
+[2026-01-30 15:02:03] User notification created
+[2026-01-30 15:02:03] Found 2 admins for department 32
+[2026-01-30 15:02:03] Admin notifications created for 2 admins
+[2026-01-30 15:02:03] === SUBMISSION SUCCESSFUL ===
+[2026-01-30 15:07:34] === UPDATE APPLICATION REQUEST ===
+[2026-01-30 15:07:34] POST: {"app_id":"83","status":"Completed","remarks":"","send_email":"1","send_sms":"1"}
+[2026-01-30 15:07:34] SESSION: user_id=3, role=superadmin
+[2026-01-30 15:07:34] app_id: 83, new_status: Completed, send_email: yes, send_sms: yes
+[2026-01-30 15:07:34] Old status: paid, New status: Completed
+[2026-01-30 15:07:34] Application updated successfully
+[2026-01-30 15:07:34] Status history added
+[2026-01-30 15:07:34] In-app notification created
+[2026-01-30 15:07:34] Transaction committed
+[2026-01-30 15:07:34] Attempting to send email to: keithjustine57@gmail.com
+[2026-01-30 15:07:39] Email sent successfully
+[2026-01-30 15:07:39] Attempting to send SMS to: 09994213211
+[2026-01-30 15:07:39] SMS sending failed
+[2026-01-30 15:07:39] === UPDATE COMPLETED SUCCESSFULLY ===

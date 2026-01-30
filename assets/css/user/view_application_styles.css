@@ -1,0 +1,495 @@
+
+<style>
+:root {
+    --primary: #7cb342;
+    --primary-dark: #689f38;
+    --secondary: #9ccc65;
+    --text-dark: #2d3748;
+    --text-light: #718096;
+    --bg-light: #f8faf8;
+}
+
+body {
+    background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.wrapper {
+    background: #ffffff;
+    min-height: calc(100vh - 40px);
+    margin: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    padding: 3rem 2rem;
+}
+
+.page-wrapper {
+    position: relative;
+    padding: 0;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.back-btn {
+    display: inline-flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: var(--text-dark);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+}
+
+.back-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(124, 179, 66, 0.25);
+}
+
+.page-header h1 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.page-header .tracking-info {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.95rem;
+}
+
+.page-header .tracking-number {
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 0.6rem 1.25rem;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Pending - Orange */
+.status-pending {
+    background: rgba(255, 107, 53, 0.15);
+    color: #ff6b35;
+    border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+/* Processing - Yellow */
+.status-processing {
+    background: rgba(251, 191, 36, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Approved - Blue */
+.status-approved {
+    background: rgba(59, 130, 246, 0.15);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Paid - Green */
+.status-paid {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Completed - Cyan/Light Blue */
+.status-completed {
+    background: rgba(6, 182, 212, 0.15);
+    color: #0891b2;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+/* Rejected - Red */
+.status-rejected {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+/* Cancelled - Brown */
+.status-cancelled {
+    background: rgba(146, 64, 14, 0.15);
+    color: #92400e;
+    border: 1px solid rgba(146, 64, 14, 0.3);
+}
+
+/* Solid color for cancelled status badge in page header */
+.page-header .status-badge.status-cancelled {
+    background: #92400e;
+    color: white;
+}
+/* Solid colors ONLY for status badge in page header */
+.page-header .status-badge.status-pending {
+    background: #ff6b35;
+    color: white;
+}
+
+.page-header .status-badge.status-processing {
+    background: #fbbf24;
+    color: #854d0e;
+}
+
+.page-header .status-badge.status-approved {
+    background: #3b82f6;
+    color: white;
+}
+
+.page-header .status-badge.status-paid {
+    background: #10b981;
+    color: white;
+}
+
+.page-header .status-badge.status-completed {
+    background: #06b6d4;
+    color: white;
+}
+
+.page-header .status-badge.status-rejected {
+    background: #ef4444;
+    color: white;
+}
+
+/* Payment Status Badges */
+.payment-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+.payment-required {
+    background: #ffc107;
+    color: #ffffff;
+    border: none;
+}
+
+.payment-submitted {
+    background: #0d6efd;
+    color: #ffffff;
+    border: none;
+}
+
+.payment-verified {
+    background: #198754;
+    color: #ffffff;
+    border: none;
+}
+
+.payment-rejected {
+    background: #dc3545;
+    color: #ffffff;
+    border: none;
+}
+
+/* Cards */
+.card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
+}
+
+.card-header h2,
+.card-header h3 {
+    color: white;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.card-body {
+    padding: 1.75rem;
+}
+
+/* Table Styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table tr:last-child {
+    border-bottom: none;
+}
+
+.table td {
+    padding: 0.875rem 0;
+    vertical-align: top;
+    font-size: 0.95rem;
+}
+
+.table td:first-child {
+    color: var(--text-light);
+    font-weight: 600;
+    width: 30%;
+}
+
+.table td:last-child {
+    color: var(--text-dark);
+}
+
+/* Section Divider */
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 1.5rem 0;
+}
+
+/* Document Items */
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: #f8fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.document-item:hover {
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 2px 12px rgba(124, 179, 66, 0.15);
+}
+
+.doc-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.doc-info {
+    flex: 1;
+}
+
+.doc-info h5 {
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.375rem 0;
+}
+
+.doc-meta {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 179, 66, 0.3);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Alert */
+.alert {
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    background: #e3f2fd;
+    border-left-color: #2196F3;
+}
+
+.alert strong {
+    color: var(--text-dark);
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.95rem;
+}
+
+.alert p {
+    color: var(--text-light);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Copy Button */
+.copy-btn {
+    margin-left: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    background: white;
+    color: var(--primary);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+/* Layout Grid */
+.row {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 1.5rem;
+}
+
+.col-lg-8 {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.col-lg-4 {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Mini Card Items */
+.mini-card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0;
+}
+
+.mini-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.mini-value {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.mini-value.highlight {
+    color: var(--primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.mini-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0.5rem 0;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: white !important;
+    }
+    
+    .wrapper {
+        margin: 0;
+        box-shadow: none;
+    }
+    
+    .back-btn, .copy-btn, .doc-actions, .col-lg-4 {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd;
+        box-shadow: none;
+    }
+}
+</style>

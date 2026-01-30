@@ -1,15 +1,30 @@
 // FILE: assets/js/apply-form.js
-// FIXED VERSION - Handles null elements safely
+// Enhanced version with real-time AJAX updates similar to applications.php
 
-document.addEventListener('DOMContentLoaded', function() {
+// Global variables for tracking current selections
+let currentDepartmentValue = '';
+let currentServiceValue = '';
+let departmentRefreshInterval;
+let serviceRefreshInterval;
+
+document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ Apply form script loaded');
-    
-    // FIXED: Use the correct IDs from your HTML
+
+    // CRITICAL FIX: Only run if we're on the application page
+    const applicationForm = document.getElementById('applicationForm');
+
+    if (!applicationForm) {
+        console.log('ℹ️ Application form not found - skipping apply-form.js');
+        return; // EXIT - Don't run any of this code on other pages!
+    }
+
+    console.log('✅ Application form found - initializing with AJAX');
+
+    // Get form elements
     const departmentSelect = document.getElementById('department_select');
     const serviceSelect = document.getElementById('service_select');
-    const applicationForm = document.getElementById('applicationForm');
     const submitBtn = document.getElementById('submitBtn');
-    
+
     // Log what we found
     console.log('Found elements:', {
         department: !!departmentSelect,
@@ -17,50 +32,58 @@ document.addEventListener('DOMContentLoaded', function() {
         form: !!applicationForm,
         button: !!submitBtn
     });
-    
+
     // Check if elements exist
     if (!departmentSelect) {
         console.error('❌ Department select not found');
         return;
     }
-    
+
     if (!serviceSelect) {
         console.error('❌ Service select not found');
         return;
     }
-    
-    if (!applicationForm) {
-        console.error('❌ Form not found');
-        return;
-    }
-    
-    // Load departments on page load
-    loadDepartments();
-    
-    // Department change handler
-    departmentSelect.addEventListener('change', function() {
-        const departmentId = this.value;
-        console.log('Department selected:', departmentId);
-        
-        if (departmentId) {
-            loadServices(departmentId);
+
+    // Initial load of departments
+    loadDepartments(false);
+
+    // Start automatic refresh after initial load
+    setTimeout(() => {
+        startDepartmentRefresh();
+        startServiceRefresh();
+    }, 2000);
+
+    // Department change handler - track selection and load services
+    departmentSelect.addEventListener('change', function () {
+        currentDepartmentValue = this.value;
+        currentServiceValue = '';
+        console.log('Department changed to:', currentDepartmentValue);
+
+        if (currentDepartmentValue) {
+            loadServices(currentDepartmentValue, false);
         } else {
             serviceSelect.innerHTML = '<option value="">-- First select a department --</option>';
             serviceSelect.disabled = true;
             hideRequirementsBox();
         }
     });
-    
-    // Form submit handler
-    applicationForm.addEventListener('submit', async function(e) {
+
+    // Track service selection changes
+    serviceSelect.addEventListener('change', function () {
+        currentServiceValue = this.value;
+        console.log('Service changed to:', currentServiceValue);
+    });
+
+    // Form submit handler - ONLY for applicationForm
+    applicationForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        console.log('📝 Form submitted');
-        
+        console.log('Application form submitted');
+
         // Validate form
         if (!validateForm()) {
             return;
         }
-        
+
         // Disable submit button
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -69,19 +92,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btnText) btnText.style.display = 'none';
             if (btnLoader) btnLoader.style.display = 'inline-block';
         }
-        
+
         try {
             // Create FormData
             const formData = new FormData(this);
-            
-            // IMPORTANT: Get the actual IDs from the select elements
+
+            // Get the actual IDs from the select elements
             const deptId = document.getElementById('department_select').value;
             const serviceId = document.getElementById('service_select').value;
-            
+
             // Add IDs to form data with correct names
             formData.set('department_id', deptId);
             formData.set('service_id', serviceId);
-            
+
             // Log form data for debugging
             console.log('Form data:', {
                 department_id: deptId,
@@ -89,19 +112,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 purpose: formData.get('purpose')?.substring(0, 50),
                 file: formData.get('compiled_document')?.name
             });
-            
+
             // Submit to API
             const response = await fetch('../api/submit_department_application.php', {
                 method: 'POST',
                 body: formData
             });
-            
+
             console.log('Response status:', response.status);
-            
+
             // Parse response
             const result = await response.json();
             console.log('API response:', result);
-            
+
             if (result.success) {
                 // Success!
                 showSuccessModal(result);
@@ -109,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Error from API
                 showError(result.message || 'An error occurred. Please try again.');
             }
-            
+
         } catch (error) {
             console.error('❌ Submission error:', error);
             showError('Failed to submit application. Please check your connection and try again.');
@@ -124,181 +147,313 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    console.log('✅ Apply form script fully initialized with AJAX');
 });
 
 /**
- * Load departments from API
+ * Load departments from API with automatic refresh capability
+ * @param {boolean} silent - If true, don't show loading states (for background refresh)
  */
-async function loadDepartments() {
+async function loadDepartments(silent = false) {
     const departmentSelect = document.getElementById('department_select');
-    
+
     if (!departmentSelect) {
         console.error('❌ Cannot find department select element');
         return;
     }
-    
+
+    // Store current selection to restore after refresh
+    const previousValue = currentDepartmentValue || departmentSelect.value;
+
     try {
-        console.log('📥 Loading departments from API...');
-        
-        // Show loading state
-        departmentSelect.innerHTML = '<option value="">Loading departments...</option>';
-        departmentSelect.disabled = true;
-        
+        if (!silent) {
+            console.log('🔄 Loading departments from API...');
+            departmentSelect.innerHTML = '<option value="">Loading departments...</option>';
+            departmentSelect.disabled = true;
+        }
+
         const response = await fetch('../api/get_departments.php');
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
-        console.log('API Response:', data);
-        
+
+        if (!silent) {
+            console.log('API Response:', data);
+        }
+
         if (data.success && data.departments && data.departments.length > 0) {
-            departmentSelect.innerHTML = '<option value="">-- Choose your department --</option>';
-            
+            let options = '<option value="">-- Choose your department --</option>';
+
             data.departments.forEach(dept => {
-                const option = document.createElement('option');
-                option.value = dept.id;
-                option.textContent = dept.name;
-                if (dept.code) option.setAttribute('data-code', dept.code);
-                departmentSelect.appendChild(option);
+                const selected = dept.id == previousValue ? 'selected' : '';
+                const dataCode = dept.code ? `data-code="${dept.code}"` : '';
+                options += `<option value="${dept.id}" ${selected} ${dataCode}>${dept.name}</option>`;
             });
-            
+
+            departmentSelect.innerHTML = options;
             departmentSelect.disabled = false;
-            console.log(`✅ Loaded ${data.departments.length} departments successfully`);
+
+            // Restore previous selection
+            if (previousValue) {
+                currentDepartmentValue = previousValue;
+                departmentSelect.value = previousValue;
+
+                // If we had a department selected, reload its services
+                if (previousValue) {
+                    loadServices(previousValue, silent);
+                }
+            }
+
+            if (!silent) {
+                console.log(`✅ Loaded ${data.departments.length} departments successfully`);
+            }
         } else if (data.success && data.departments && data.departments.length === 0) {
             departmentSelect.innerHTML = '<option value="">No departments available</option>';
-            console.warn('⚠️ No departments found in database');
+            if (!silent) {
+                console.warn('⚠️ No departments found in database');
+            }
         } else {
             throw new Error(data.message || 'Failed to load departments');
         }
     } catch (error) {
         console.error('❌ Error loading departments:', error);
-        departmentSelect.innerHTML = '<option value="">Error loading departments</option>';
-        showError('Failed to load departments. Please refresh the page. Error: ' + error.message);
+        if (!silent) {
+            departmentSelect.innerHTML = '<option value="">Error loading departments</option>';
+            showError('Failed to load departments. Please refresh the page.');
+        }
     }
 }
 
 /**
- * Load services for selected department
+ * Load services for selected department with automatic refresh capability
+ * @param {string|number} departmentId - The department ID
+ * @param {boolean} silent - If true, don't show loading states (for background refresh)
  */
-async function loadServices(departmentId) {
+async function loadServices(departmentId, silent = false) {
     const serviceSelect = document.getElementById('service_select');
     const requirementsBox = document.getElementById('requirementsBox');
-    
+
     if (!serviceSelect) {
         console.error('❌ Cannot find service select element');
         return;
     }
-    
-    // Reset service select
-    serviceSelect.innerHTML = '<option value="">Loading services...</option>';
-    serviceSelect.disabled = true;
-    
-    // Hide requirements box
-    if (requirementsBox) {
-        requirementsBox.style.display = 'none';
+
+    // Store current selection to restore after refresh
+    const previousValue = currentServiceValue || serviceSelect.value;
+
+    if (!silent) {
+        // Reset service select with loading state
+        serviceSelect.innerHTML = '<option value="">Loading services...</option>';
+        serviceSelect.disabled = true;
+
+        // Hide requirements box
+        if (requirementsBox) {
+            requirementsBox.style.display = 'none';
+        }
     }
-    
+
     try {
-        console.log('📥 Loading services for department:', departmentId);
-        
+        if (!silent) {
+            console.log('🔄 Loading services for department:', departmentId);
+        }
+
         const response = await fetch(`../api/get_services.php?department_id=${departmentId}`);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
-        console.log('API Response:', data);
-        
-        if (data.success && data.services) {
-            serviceSelect.innerHTML = '<option value="">-- Choose your service --</option>';
-            
-            if (data.services.length === 0) {
-                serviceSelect.innerHTML = '<option value="">No services available for this department</option>';
-                console.warn('⚠️ No services found for department:', departmentId);
-                return;
-            }
-            
+
+        if (!silent) {
+            console.log('Services API Response:', data);
+        }
+
+        if (data.success && data.services && data.services.length > 0) {
+            let options = '<option value="">-- Select a service --</option>';
+
             data.services.forEach(service => {
-                const option = document.createElement('option');
-                option.value = service.id;
-                option.textContent = service.service_name;
-                if (service.base_fee) option.setAttribute('data-fee', service.base_fee);
-                if (service.processing_days) option.setAttribute('data-days', service.processing_days);
-                if (service.requirements) option.setAttribute('data-requirements', service.requirements);
-                if (service.description) option.setAttribute('data-description', service.description);
-                serviceSelect.appendChild(option);
+                const selected = service.id == previousValue ? 'selected' : '';
+                const dataFee = service.base_fee ? `data-fee="${service.base_fee}"` : 'data-fee="0"';
+                const dataReq = service.requirements ? `data-requirements="${service.requirements.replace(/"/g, '&quot;')}"` : '';
+                const dataProc = service.processing_days ? `data-processing="${service.processing_days}"` : '';
+
+                options += `<option value="${service.id}" ${selected} ${dataFee} ${dataReq} ${dataProc}>${service.service_name}</option>`;
             });
-            
+
+            serviceSelect.innerHTML = options;
             serviceSelect.disabled = false;
-            console.log(`✅ Loaded ${data.services.length} services successfully`);
-            
-            // Add service change listener
-            serviceSelect.removeEventListener('change', handleServiceChange);
-            serviceSelect.addEventListener('change', handleServiceChange);
+
+            // Restore previous selection
+            if (previousValue) {
+                currentServiceValue = previousValue;
+                serviceSelect.value = previousValue;
+
+                // Show requirements if service was selected
+                if (previousValue) {
+                    const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        showRequirements(selectedOption);
+                    }
+                }
+            }
+
+            // Add change listener if not already added
+            if (!serviceSelect.dataset.listenerAdded) {
+                serviceSelect.addEventListener('change', function () {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        showRequirements(selectedOption);
+                    } else {
+                        hideRequirementsBox();
+                    }
+                });
+                serviceSelect.dataset.listenerAdded = 'true';
+            }
+
+            if (!silent) {
+                console.log(`✅ Loaded ${data.services.length} services successfully`);
+            }
+        } else if (data.success && data.services && data.services.length === 0) {
+            serviceSelect.innerHTML = '<option value="">No services available for this department</option>';
+            serviceSelect.disabled = true;
+            if (!silent) {
+                console.warn('⚠️ No services found for this department');
+            }
         } else {
             throw new Error(data.message || 'Failed to load services');
         }
     } catch (error) {
         console.error('❌ Error loading services:', error);
-        serviceSelect.innerHTML = '<option value="">Error loading services</option>';
-        showError('Failed to load services. Please try again. Error: ' + error.message);
+        if (!silent) {
+            serviceSelect.innerHTML = '<option value="">Error loading services</option>';
+            serviceSelect.disabled = true;
+            showError('Failed to load services. Please try again.');
+        }
     }
 }
 
 /**
- * Handle service selection change
+ * Show requirements for selected service
  */
-function handleServiceChange() {
-    const selectedOption = this.options[this.selectedIndex];
-    
-    if (!selectedOption.value) {
-        hideRequirementsBox();
-        return;
-    }
-    
-    displayServiceInfo(selectedOption);
-}
-
-/**
- * Display selected service information
- */
-function displayServiceInfo(selectedOption) {
+function showRequirements(selectedOption) {
     const requirementsBox = document.getElementById('requirementsBox');
     const requirementsList = document.getElementById('requirementsList');
     const serviceFee = document.getElementById('serviceFee');
-    
-    if (!requirementsBox || !requirementsList) return;
-    
-    const fee = selectedOption.getAttribute('data-fee');
+
+    if (!requirementsBox || !requirementsList || !serviceFee) return;
+
     const requirements = selectedOption.getAttribute('data-requirements');
-    
-    // Display requirements
-    if (requirements && requirements.trim()) {
-        const reqList = requirements.split('\n').filter(r => r.trim());
-        if (reqList.length > 0) {
-            let html = '<ul style="margin: 10px 0; padding-left: 20px;">';
-            reqList.forEach(req => {
-                html += `<li style="margin: 8px 0;">${req.trim()}</li>`;
+    const fee = selectedOption.getAttribute('data-fee') || '0';
+    const processingDays = selectedOption.getAttribute('data-processing');
+
+    // Parse and display requirements
+    if (requirements && requirements.trim() !== '') {
+        const reqArray = requirements.split('\n').filter(req => req.trim() !== '');
+        requirementsList.innerHTML = '';
+
+        reqArray.forEach((req, index) => {
+            const li = document.createElement('li');
+            li.style.cursor = 'pointer';
+            li.style.transition = 'all 0.2s ease';
+            li.style.padding = '0.5rem';
+            li.style.borderRadius = '6px';
+
+            // Split requirement and image (format: "Requirement Name|image_filename.jpg")
+            const parts = req.trim().split('|');
+            const reqText = parts[0];
+            const reqImage = parts[1] || null;
+
+            li.textContent = reqText;
+
+            // Add hover effect
+            li.addEventListener('mouseenter', function () {
+                this.style.backgroundColor = '#e8f5e9';
+                if (reqImage) {
+                    this.style.fontWeight = '600';
+                    this.style.color = '#558b2f';
+                }
             });
-            html += '</ul>';
-            requirementsList.innerHTML = html;
-        }
+
+            li.addEventListener('mouseleave', function () {
+                this.style.backgroundColor = '';
+                this.style.fontWeight = '';
+                this.style.color = '';
+            });
+
+            // Add click event to show image
+            li.style.textDecoration = 'underline';
+            li.style.cursor = 'pointer';
+            li.title = reqImage ? 'Click to view sample' : 'Click to view (sample not available yet)';
+
+            li.addEventListener('click', function () {
+                showRequirementImage(reqText, reqImage);
+            });
+
+            requirementsList.appendChild(li);
+        });
+
+        // Display fee
+        serviceFee.textContent = parseFloat(fee) > 0 ? `₱${parseFloat(fee).toFixed(2)}` : 'FREE';
+
+        // Show the box
+        requirementsBox.style.display = 'block';
+
+        console.log('✅ Requirements displayed:', reqArray.length, 'items');
     } else {
-        requirementsList.innerHTML = '<p style="color: #999; font-style: italic;">No specific requirements listed</p>';
+        requirementsList.innerHTML = '<li style="list-style: none;">No specific requirements listed</li>';
+        serviceFee.textContent = parseFloat(fee) > 0 ? `₱${parseFloat(fee).toFixed(2)}` : 'FREE';
+        requirementsBox.style.display = 'block';
     }
-    
-    // Display fee
-    if (serviceFee && fee) {
-        serviceFee.textContent = `Fee: ₱${parseFloat(fee).toFixed(2)}`;
+}
+// Function to show requirement image
+function showRequirementImage(requirementName, imagePath) {
+    const modal = document.getElementById('requirementImageModal');
+    const img = document.getElementById('requirementImage');
+    const title = document.getElementById('requirementImageTitle');
+
+    if (modal && img && title) {
+        title.textContent = requirementName;
+
+        // Use placeholder if no image exists, or use the actual image path
+        if (imagePath && imagePath.trim() !== '') {
+            img.src = `../assets/images/requirements/${imagePath}`;
+
+            // Add error handler to show placeholder if image doesn't exist
+            img.onerror = function () {
+                this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"%3E%3Crect fill="%23f0f0f0" width="800" height="600"/%3E%3Ctext x="400" y="280" font-family="Arial, sans-serif" font-size="24" fill="%23999" text-anchor="middle"%3EImage not available yet%3C/text%3E%3Ctext x="400" y="320" font-family="Arial, sans-serif" font-size="18" fill="%23bbb" text-anchor="middle"%3E' + requirementName + '%3C/text%3E%3Cg transform="translate(350, 100)"%3E%3Crect x="0" y="0" width="100" height="120" fill="none" stroke="%23ccc" stroke-width="3" rx="5"/%3E%3Cpolyline points="20,80 50,50 80,80" fill="none" stroke="%23ccc" stroke-width="3"/%3E%3Ccircle cx="30" cy="40" r="8" fill="%23ccc"/%3E%3C/g%3E%3C/svg%3E';
+                this.onerror = null; // Prevent infinite loop
+            };
+        } else {
+            // No image path provided, show placeholder
+            img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"%3E%3Crect fill="%23f0f0f0" width="800" height="600"/%3E%3Ctext x="400" y="280" font-family="Arial, sans-serif" font-size="24" fill="%23999" text-anchor="middle"%3ENo sample image available%3C/text%3E%3Ctext x="400" y="320" font-family="Arial, sans-serif" font-size="18" fill="%23bbb" text-anchor="middle"%3E' + requirementName + '%3C/text%3E%3Cg transform="translate(350, 100)"%3E%3Crect x="0" y="0" width="100" height="120" fill="none" stroke="%23ccc" stroke-width="3" rx="5"/%3E%3Cpolyline points="20,80 50,50 80,80" fill="none" stroke="%23ccc" stroke-width="3"/%3E%3Ccircle cx="30" cy="40" r="8" fill="%23ccc"/%3E%3C/g%3E%3C/svg%3E';
+        }
+
+        // Flash animation
+        modal.style.display = 'block';
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.transition = 'opacity 0.3s ease';
+            modal.style.opacity = '1';
+        }, 10);
+
+        console.log('📸 Showing requirement image:', requirementName, 'Path:', imagePath || 'No image');
     }
-    
-    // Show requirements box
-    requirementsBox.style.display = 'block';
+}
+// Function to close requirement image
+function closeRequirementImage() {
+    const modal = document.getElementById('requirementImageModal');
+    if (modal) {
+        modal.style.transition = 'opacity 0.2s ease';
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200);
+    }
 }
 
 /**
@@ -312,73 +467,120 @@ function hideRequirementsBox() {
 }
 
 /**
+ * Start automatic department refresh (every 5 seconds)
+ */
+function startDepartmentRefresh() {
+    // Clear existing interval if any
+    if (departmentRefreshInterval) {
+        clearInterval(departmentRefreshInterval);
+    }
+
+    departmentRefreshInterval = setInterval(() => {
+        loadDepartments(true); // Silent refresh
+        console.log('🔄 Auto-refreshed departments (silent)');
+    }, 5000);
+
+    console.log('✅ Department auto-refresh started (every 5 seconds)');
+}
+
+/**
+ * Start automatic service refresh (every 5 seconds)
+ */
+function startServiceRefresh() {
+    // Clear existing interval if any
+    if (serviceRefreshInterval) {
+        clearInterval(serviceRefreshInterval);
+    }
+
+    serviceRefreshInterval = setInterval(() => {
+        const departmentSelect = document.getElementById('department_select');
+        if (departmentSelect && departmentSelect.value) {
+            loadServices(departmentSelect.value, true); // Silent refresh
+            console.log('🔄 Auto-refreshed services (silent)');
+        }
+    }, 5000);
+
+    console.log('✅ Service auto-refresh started (every 5 seconds)');
+}
+
+/**
+ * Stop all refresh intervals
+ */
+function stopAllRefresh() {
+    if (departmentRefreshInterval) {
+        clearInterval(departmentRefreshInterval);
+        console.log('⏸️ Department auto-refresh stopped');
+    }
+    if (serviceRefreshInterval) {
+        clearInterval(serviceRefreshInterval);
+        console.log('⏸️ Service auto-refresh stopped');
+    }
+}
+
+/**
  * Validate form before submission
  */
 function validateForm() {
-    const department = document.getElementById('department_select');
-    const service = document.getElementById('service_select');
+    const departmentSelect = document.getElementById('department_select');
+    const serviceSelect = document.getElementById('service_select');
     const purpose = document.getElementById('purpose');
     const fileInput = document.getElementById('compiled_document');
-    const termsCheckbox = document.getElementById('terms');
-    
+    const terms = document.getElementById('terms');
+
     // Check department
-    if (!department || !department.value) {
+    if (!departmentSelect.value) {
         showError('Please select a department');
-        department?.focus();
+        departmentSelect.focus();
         return false;
     }
-    
+
     // Check service
-    if (!service || !service.value) {
+    if (!serviceSelect.value) {
         showError('Please select a service');
-        service?.focus();
+        serviceSelect.focus();
         return false;
     }
-    
+
     // Check purpose
-    if (!purpose || !purpose.value.trim()) {
+    if (!purpose.value.trim()) {
         showError('Please enter the purpose of your application');
-        purpose?.focus();
+        purpose.focus();
         return false;
     }
-    
+
     if (purpose.value.trim().length < 10) {
         showError('Purpose must be at least 10 characters long');
-        purpose?.focus();
+        purpose.focus();
         return false;
     }
-    
-    // Check file
-    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        showError('Please upload the required document (PDF only)');
-        fileInput?.focus();
-        return false;
+
+    // Check file (OPTIONAL - only validate if a file is selected)
+    if (fileInput.files && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+
+        // Check file type
+        if (file.type !== 'application/pdf') {
+            showError('Only PDF files are allowed');
+            fileInput.focus();
+            return false;
+        }
+
+        // Check file size (10MB max)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (file.size > maxSize) {
+            showError('File size must not exceed 10MB');
+            fileInput.focus();
+            return false;
+        }
     }
-    
-    const file = fileInput.files[0];
-    
-    // Check file type
-    if (file.type !== 'application/pdf') {
-        showError('Only PDF files are allowed');
-        fileInput.focus();
-        return false;
-    }
-    
-    // Check file size (10MB max)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showError('File size must not exceed 10MB');
-        fileInput.focus();
-        return false;
-    }
-    
-    // Check terms checkbox
-    if (termsCheckbox && !termsCheckbox.checked) {
+
+    // Check terms
+    if (!terms.checked) {
         showError('Please accept the terms and conditions');
-        termsCheckbox.focus();
+        terms.focus();
         return false;
     }
-    
+
     console.log('✅ Form validation passed');
     return true;
 }
@@ -387,96 +589,130 @@ function validateForm() {
  * Show success modal with application details
  */
 function showSuccessModal(result) {
-    // Create modal HTML
-    const modalHTML = `
-        <div id="successModal" class="modal" style="display: flex;">
-            <div class="modal-content" style="max-width: 500px;">
-                <div style="text-align: center; padding: 20px;">
-                    <div style="font-size: 4rem; color: #4CAF50; margin-bottom: 20px;">✅</div>
-                    <h2 style="color: #4CAF50; margin-bottom: 15px;">Application Submitted Successfully!</h2>
-                    
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Your Tracking Number:</p>
-                        <p style="font-size: 1.8rem; font-weight: 800; color: #333; margin: 0;">${result.tracking_number}</p>
-                    </div>
-                    
-                    <div style="text-align: left; margin: 20px 0;">
-                        <p><strong>Service:</strong> ${result.service_name}</p>
-                        <p><strong>Department:</strong> ${result.department}</p>
-                        <p style="color: #666; font-size: 0.9rem; margin-top: 15px;">
-                            Please save your tracking number for future reference. 
-                            You can check your application status in "My Applications" page.
-                        </p>
-                    </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button onclick="window.location.href='applications.php'" 
-                                style="flex: 1; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            View My Applications
-                        </button>
-                        <button onclick="window.location.reload()" 
-                                style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            Submit Another
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('successModal');
-    if (existingModal) {
-        existingModal.remove();
+    const modal = document.getElementById('successModal');
+    const trackingNumber = document.getElementById('modalTrackingNumber');
+    const serviceName = document.getElementById('modalService');
+    const departmentName = document.getElementById('modalDepartment');
+
+    if (modal) {
+        // Set tracking number
+        if (trackingNumber && result.tracking_number) {
+            trackingNumber.textContent = result.tracking_number;
+        }
+
+        // Set service name
+        if (serviceName && result.service_name) {
+            serviceName.textContent = result.service_name;
+        }
+
+        // Set department name
+        if (departmentName && result.department_name) {
+            departmentName.textContent = result.department_name;
+        }
+
+        // Show modal
+        modal.style.display = 'flex';
+
+        console.log('✅ Success modal displayed');
     }
-    
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    console.log('✅ Success modal displayed');
+}
+
+/**
+ * Copy tracking number to clipboard
+ */
+function copyTrackingNumber() {
+    const trackingNumber = document.getElementById('modalTrackingNumber');
+    if (trackingNumber) {
+        const text = trackingNumber.textContent;
+
+        // Modern clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show temporary feedback
+                const originalText = trackingNumber.textContent;
+                trackingNumber.textContent = '✓ Copied!';
+                trackingNumber.style.color = '#22c55e';
+
+                setTimeout(() => {
+                    trackingNumber.textContent = originalText;
+                    trackingNumber.style.color = '';
+                }, 2000);
+
+                console.log('✅ Tracking number copied to clipboard');
+            }).catch(err => {
+                console.error('❌ Failed to copy:', err);
+                fallbackCopy(text);
+            });
+        } else {
+            // Fallback for older browsers
+            fallbackCopy(text);
+        }
+    }
+}
+
+/**
+ * Fallback copy method for older browsers
+ */
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+        document.execCommand('copy');
+        console.log('✅ Tracking number copied (fallback method)');
+        alert('Tracking number copied to clipboard!');
+    } catch (err) {
+        console.error('❌ Fallback copy failed:', err);
+        alert('Failed to copy. Please copy manually: ' + text);
+    }
+
+    document.body.removeChild(textArea);
 }
 
 /**
  * Show error message
  */
 function showError(message) {
-    // Try to find an alert container
-    let alertContainer = document.getElementById('alertContainer');
-    
-    if (!alertContainer) {
-        // Create alert container if it doesn't exist
-        alertContainer = document.createElement('div');
-        alertContainer.id = 'alertContainer';
-        alertContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
-        document.body.appendChild(alertContainer);
-    }
-    
     // Create alert element
     const alert = document.createElement('div');
+    alert.className = 'alert alert-danger';
     alert.style.cssText = `
-        background: #f8d7da;
-        color: #721c24;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border-left: 4px solid #dc3545;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        max-width: 400px;
         animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
+
     alert.innerHTML = `
-        <strong>❌ Error:</strong> ${message}
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem;"></i>
+            <div style="flex: 1;">
+                <strong>Error</strong><br>
+                ${message}
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #991b1b; padding: 0; width: 24px; height: 24px;">
+                &times;
+            </button>
+        </div>
     `;
-    
-    // Add to container
-    alertContainer.appendChild(alert);
-    
-    // Auto remove after 5 seconds
+
+    document.body.appendChild(alert);
+
+    // Auto-remove after 5 seconds
     setTimeout(() => {
         alert.style.opacity = '0';
         alert.style.transition = 'opacity 0.3s ease';
         setTimeout(() => alert.remove(), 300);
     }, 5000);
-    
+
     console.error('❌ Error shown:', message);
 }
 
@@ -485,18 +721,18 @@ function showError(message) {
  */
 const fileInput = document.getElementById('compiled_document');
 if (fileInput) {
-    fileInput.addEventListener('change', function() {
+    fileInput.addEventListener('change', function () {
         const filePreview = document.getElementById('filePreview');
-        
+
         if (this.files && this.files.length > 0) {
             const file = this.files[0];
             const fileName = file.name;
             const fileSize = (file.size / 1024 / 1024).toFixed(2);
-            
+
             if (filePreview) {
                 filePreview.innerHTML = `
                     <div style="margin-top: 1rem; padding: 1rem; background: #e8f5e9; border: 2px solid #81c784; border-radius: 12px; display: flex; align-items: center; gap: 1rem;">
-                        <div style="font-size: 2rem;">📄</div>
+                        <div style="width: 40px; height: 40px; background: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%232e7d32%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z%27/%3E%3Cpolyline points=%2714 2 14 8 20 8%27/%3E%3Cline x1=%2716%27 y1=%2713%27 x2=%278%27 y2=%2713%27/%3E%3Cline x1=%2716%27 y1=%2717%27 x2=%278%27 y2=%2717%27/%3E%3Cpolyline points=%2710 9 9 9 8 9%27/%3E%3C/svg%3E') center/contain no-repeat;"></div>
                         <div style="flex: 1;">
                             <strong style="color: #2e7d32; display: block;">${fileName}</strong>
                             <small style="color: #558b2f;">Size: ${fileSize} MB</small>
@@ -509,8 +745,8 @@ if (fileInput) {
                 `;
                 filePreview.style.display = 'block';
             }
-            
-            console.log('File selected:', fileName, fileSize + 'MB');
+
+            console.log('📎 File selected:', fileName, fileSize + 'MB');
         } else {
             if (filePreview) {
                 filePreview.style.display = 'none';
@@ -520,41 +756,31 @@ if (fileInput) {
     });
 }
 
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        padding: 20px;
-    }
-    
-    .modal-content {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        animation: slideIn 0.3s ease;
-    }
-`;
-document.head.appendChild(style);
+// Stop refresh when leaving page
+window.addEventListener('beforeunload', function () {
+    stopAllRefresh();
+});
 
-console.log('✅ Apply form script fully initialized');
+// Pause/resume based on tab visibility
+document.addEventListener('visibilitychange', function () {
+    const applicationForm = document.getElementById('applicationForm');
+    if (!applicationForm) return;
+
+    if (document.hidden) {
+        console.log('👁️ Tab hidden - pausing auto-refresh');
+        stopAllRefresh();
+    } else {
+        console.log('👁️ Tab visible - resuming auto-refresh');
+        loadDepartments(true);
+
+        const departmentSelect = document.getElementById('department_select');
+        if (departmentSelect && departmentSelect.value) {
+            loadServices(departmentSelect.value, true);
+        }
+
+        startDepartmentRefresh();
+        startServiceRefresh();
+    }
+});
+
+console.log('✅ Apply form script with AJAX auto-refresh fully loaded');

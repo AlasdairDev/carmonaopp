@@ -8,6 +8,8 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/send_email.php';
 require_once __DIR__ . '/../includes/send_sms.php';
+require_once __DIR__ . '/../includes/security.php';
+
 
 header('Content-Type: application/json');
 
@@ -22,14 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $app_id = (int)($_POST['app_id'] ?? 0);
+    $app_id = (int) ($_POST['app_id'] ?? 0);
     $action = $_POST['action'] ?? ''; // 'verify' or 'reject'
     $admin_id = $_SESSION['user_id'];
-    
+
     if (!$app_id || !in_array($action, ['verify', 'reject'])) {
         throw new Exception('Invalid request parameters');
     }
-    
+
     // Get application details - now checking for "Paid" status
     $stmt = $pdo->prepare("
         SELECT a.*, u.name, u.email, u.mobile, s.service_name
@@ -40,14 +42,19 @@ try {
     ");
     $stmt->execute([$app_id]);
     $app = $stmt->fetch();
-    
+
+
     if (!$app) {
         throw new Exception('Application not found or payment already processed');
     }
-    
+
+    if (!hasAccessToApplication($app_id)) {
+        echo json_encode(['success' => false, 'message' => 'Access denied. You can only verify payments for your department.']);
+        exit();
+    }
     // Start transaction
     $pdo->beginTransaction();
-    
+
     if ($action === 'verify') {
         // Verify payment - keep status as "Paid", just mark payment as verified
         $stmt = $pdo->prepare("
@@ -59,36 +66,41 @@ try {
             WHERE id = ?
         ");
         $stmt->execute([$admin_id, $app_id]);
-        
+
         // Add to status history
         $stmt = $pdo->prepare("
             INSERT INTO application_status_history (application_id, status, remarks, updated_by, created_at)
             VALUES (?, 'Paid', 'Payment verified by admin - Ready for document claiming', ?, NOW())
         ");
         $stmt->execute([$app_id, $admin_id]);
-        
+
         // Add to payment history
         $stmt = $pdo->prepare("
             INSERT INTO payment_history (application_id, action, amount, notes, performed_by, performed_at)
             VALUES (?, 'payment_verified', ?, 'Payment verified by admin', ?, NOW())
         ");
         $stmt->execute([$app_id, $app['payment_amount'], $admin_id]);
-        
+
         // Create notification for user
         $notif_title = '✅ Payment Verified - Ready for Claiming';
         $notif_message = "Great news! Your payment for application {$app['tracking_number']} has been verified! You may now claim your permit/document at our office.";
-        
+
         $stmt = $pdo->prepare("
             INSERT INTO notifications (user_id, application_id, title, message, type, created_at)
-            VALUES (?, ?, ?, ?, 'success', NOW())
+            VALUES (?, ?, ?, ?, 'payment_verified', NOW())
         ");
         $stmt->execute([$app['user_id'], $app_id, $notif_title, $notif_message]);
-        
+
         // Log activity
-        logActivity($admin_id, 'Verify Payment', "Verified payment for application {$app['tracking_number']}");
-        
+        logActivity(
+            $admin_id,
+            'Verify Payment',
+            "Verified payment for application {$app['tracking_number']}",
+            null,  // details
+            $app['department_id']  // ADD THIS
+        );
         $pdo->commit();
-        
+
         // Send email
         try {
             if (!empty($app['email'])) {
@@ -181,36 +193,50 @@ try {
                     </body>
                     </html>
                 ";
-                
-                sendEmail($app['email'], $email_subject, $email_body);
+
+                sendEmail(
+                    $app['email'],
+                    $email_subject,
+                    $email_body,
+                    '',  // altBody
+                    $app['user_id'],
+                    $app_id,
+                    $app['department_id']
+                );
             }
         } catch (Exception $e) {
             error_log("Failed to send verification email: " . $e->getMessage());
         }
-        
+
         // Send SMS
         try {
             if (!empty($app['mobile'])) {
                 $sms_message = "✅ PAYMENT VERIFIED! Your application {$app['tracking_number']} is ready for claiming. Visit our office with valid ID and tracking number. Thank you!";
-                sendSMS($app['mobile'], $sms_message);
+                sendSMS(
+                    $app['mobile'],
+                    $sms_message,
+                    $app['user_id'],
+                    $app_id,
+                    $app['department_id']
+                );
             }
         } catch (Exception $e) {
             error_log("Failed to send verification SMS: " . $e->getMessage());
         }
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Payment verified successfully! Applicant can now claim their document.',
             'status' => 'Paid - Verified'
         ]);
-        
+
     } else if ($action === 'reject') {
         $rejection_reason = trim($_POST['rejection_reason'] ?? '');
-        
+
         if (empty($rejection_reason)) {
             throw new Exception('Rejection reason is required');
         }
-        
+
         // Reject payment - revert status back to Approved, reset payment
         $stmt = $pdo->prepare("
             UPDATE applications SET
@@ -225,34 +251,39 @@ try {
             WHERE id = ?
         ");
         $stmt->execute([$rejection_reason, $app_id]);
-        
+
         // Add to status history - record status change back to Approved
         $stmt = $pdo->prepare("
             INSERT INTO application_status_history (application_id, status, remarks, updated_by, created_at)
             VALUES (?, 'Approved', 'Payment rejected - Status reverted to Approved. Reason: {$rejection_reason}', ?, NOW())
         ");
         $stmt->execute([$app_id, $admin_id]);
-        
+
         // Add to payment history
         $stmt = $pdo->prepare("
             INSERT INTO payment_history (application_id, action, notes, performed_by, performed_at)
             VALUES (?, 'payment_rejected', ?, ?, NOW())
         ");
         $stmt->execute([$app_id, $rejection_reason, $admin_id]);
-        
+
         // Create notification for user
-        $notif_title = '❌ Payment Rejected - Status Reverted to APPROVED';
+        $notif_title = 'Payment Rejected - Status Reverted to APPROVED';
         $notif_message = "Your payment proof for application {$app['tracking_number']} has been rejected. Status changed back to APPROVED. Reason: {$rejection_reason}. Please submit a new payment proof.";
-        
+
         $stmt = $pdo->prepare("
             INSERT INTO notifications (user_id, application_id, title, message, type, created_at)
-            VALUES (?, ?, ?, ?, 'danger', NOW())
+            VALUES (?, ?, ?, ?, 'payment_rejected', NOW())
         ");
         $stmt->execute([$app['user_id'], $app_id, $notif_title, $notif_message]);
-        
+
         // Log activity
-        logActivity($admin_id, 'Reject Payment', "Rejected payment for application {$app['tracking_number']} - Status reverted to Approved");
-        
+        logActivity(
+            $admin_id,
+            'Reject Payment',
+            "Rejected payment for application {$app['tracking_number']} - Status reverted to Approved",
+            null,  // details
+            $app['department_id']  // ADD THIS
+        );
         // Delete old payment proof file
         if (!empty($app['payment_proof'])) {
             $file_path = __DIR__ . '/../' . $app['payment_proof'];
@@ -260,9 +291,9 @@ try {
                 unlink($file_path);
             }
         }
-        
+
         $pdo->commit();
-        
+
         // Send email
         try {
             if (!empty($app['email'])) {
@@ -322,30 +353,44 @@ try {
                     </body>
                     </html>
                 ";
-                
-                sendEmail($app['email'], $email_subject, $email_body);
+
+                sendEmail(
+                    $app['email'],
+                    $email_subject,
+                    $email_body,
+                    '',  // altBody
+                    $app['user_id'],
+                    $app_id,
+                    $app['department_id']
+                );
             }
         } catch (Exception $e) {
             error_log("Failed to send rejection email: " . $e->getMessage());
         }
-        
+
         // Send SMS
         try {
             if (!empty($app['mobile'])) {
-                $sms_message = "❌ Payment REJECTED for {$app['tracking_number']}. Status: APPROVED (Payment Pending). Reason: {$rejection_reason}. Please resubmit payment proof. Check email for details.";
-                sendSMS($app['mobile'], $sms_message);
+                $sms_message = "Payment REJECTED for {$app['tracking_number']}. Status: APPROVED (Payment Pending). Reason: {$rejection_reason}. Please resubmit payment proof. Check email for details.";
+                sendSMS(
+                    $app['mobile'],
+                    $sms_message,
+                    $app['user_id'],
+                    $app_id,
+                    $app['department_id']
+                );
             }
         } catch (Exception $e) {
             error_log("Failed to send rejection SMS: " . $e->getMessage());
         }
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Payment rejected. Status reverted to Approved. User notified to resubmit payment proof.',
             'new_status' => 'Approved'
         ]);
     }
-    
+
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

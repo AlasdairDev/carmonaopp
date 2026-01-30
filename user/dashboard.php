@@ -1,17 +1,16 @@
 <?php
-session_start();
 require_once '../config.php';
 require_once '../includes/functions.php';
-require_once '../includes/security.php'; // NEW: Add security
+require_once '../includes/security.php';
 
-// NEW: Check if user is logged in with security function
+// Check if user is logged in with security function
 if(!isLoggedIn() || $_SESSION['role'] !== 'user') {
     log_security_event('UNAUTHORIZED_ACCESS', 'Attempt to access user dashboard');
     header('Location: ../auth/login.php');
     exit();
 }
 
-// NEW: Check session timeout (already in config.php, but extra validation)
+// Check session timeout
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > SESSION_TIMEOUT) {
     session_unset();
     session_destroy();
@@ -25,12 +24,14 @@ $_SESSION['last_activity'] = time();
 $user_id = $_SESSION['user_id'];
 $user = getUserById($user_id);
 
-// Get user statistics
+// Get user statistics - COMPLETE VERSION
 $stats = [
    'total' => 0,
    'pending' => 0,
    'processing' => 0,
    'approved' => 0,
+   'paid' => 0,
+   'completed' => 0,
    'rejected' => 0
 ];
 
@@ -43,6 +44,9 @@ foreach($result as $row) {
    $status = strtolower($row['status']);
    if(isset($stats[$status])) {
        $stats[$status] = $row['count'];
+       $stats['total'] += $row['count'];
+   } else {
+       // Count unknown statuses in total as well
        $stats['total'] += $row['count'];
    }
 }
@@ -66,8 +70,8 @@ $pageTitle = 'User Dashboard';
 include '../includes/header.php';
 ?>
 
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/user-responsive.css">
 <style>
-/* Dashboard Enhancements */
 .wrapper {
     background: linear-gradient(135deg, #f5f7fa 0%, #e8f0f7 100%);
     min-height: calc(100vh - 40px);
@@ -84,10 +88,9 @@ include '../includes/header.php';
 }
 
 body {
-   background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
-   min-height: 100vh;
-   margin: 0;
-   font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .container {
@@ -104,7 +107,7 @@ body {
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     position: relative;
     overflow: hidden;
-    margin: 1;
+    margin: 0 0 2rem 0;
 }
 
 .dashboard-banner h1 {
@@ -123,14 +126,16 @@ body {
 /* Quick Actions Grid */
 .quick-actions {
    display: grid;
-   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-   gap: 2rem;
-   margin-bottom: 3rem;
+   grid-template-columns: repeat(4, 1fr);
+   gap: 1.5rem;
+   margin-bottom:2rem;
+   margin-top:2rem;
+   
 }
 
 .action-card {
    background: white;
-   padding: 2.5rem;
+   padding: 4rem 1.5rem;
    border-radius: 16px;
    text-decoration: none;
    text-align: center;
@@ -139,6 +144,11 @@ body {
    border: 2px solid transparent;
    position: relative;
    overflow: hidden;
+   min-height: 500px;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
 }
 
 .action-card::before {
@@ -164,121 +174,35 @@ body {
 }
 
 .action-icon {
-   width: 70px;
-   height: 70px;
-   margin: 0 auto 1.5rem;
+   width: 90px;
+   height: 90px;
+   margin: 0 auto 2rem;
    background: linear-gradient(135deg, #7fb842 0%, #6a9c35 100%);
    border-radius: 16px;
    display: flex;
    align-items: center;
    justify-content: center;
    color: white;
-   font-size: 2rem;
+   font-size: 2.8rem;
    font-weight: bold;
    box-shadow: 0 4px 12px rgba(127, 184, 66, 0.3);
 }
 
 .action-card h3 {
    color: #1e293b;
-   font-size: 1.3rem;
+   font-size: 1.4rem;
    font-weight: 600;
-   margin-bottom: 0.75rem;
+   margin-bottom: 1rem;
 }
 
 .action-card p {
    color: #64748b;
-   font-size: 0.95rem;
-   line-height: 1.5;
+   font-size: 1rem;
+   line-height: 1.6;
    margin: 0;
 }
 
-/* Statistics Grid */
-.stats-grid {
-   display: grid;
-   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-   gap: 1.5rem;
-   margin-bottom: 3rem;
-}
-
-.stat-card {
-   background: white;
-   padding: 2rem;
-   border-radius: 16px;
-   display: flex;
-   align-items: center;
-   gap: 1.5rem;
-   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-   transition: all 0.3s ease;
-   border-left: 4px solid transparent;
-}
-
-.stat-card:hover {
-   transform: translateX(4px);
-   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card:nth-child(1) {
-   border-left-color: #3b82f6;
-}
-
-.stat-card:nth-child(1) .stat-icon {
-   background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
-
-.stat-card:nth-child(2) {
-   border-left-color: #f59e0b;
-}
-
-.stat-card:nth-child(2) .stat-icon {
-   background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-.stat-card:nth-child(3) {
-   border-left-color: #8b5cf6;
-}
-
-.stat-card:nth-child(3) .stat-icon {
-   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.stat-card:nth-child(4) {
-   border-left-color: #10b981;
-}
-
-.stat-card:nth-child(4) .stat-icon {
-   background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.stat-icon {
-   width: 60px;
-   height: 60px;
-   border-radius: 12px;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   color: white;
-   font-size: 1.5rem;
-   font-weight: bold;
-   flex-shrink: 0;
-}
-
-.stat-info {
-   flex: 1;
-}
-
-.stat-number {
-   font-size: 2rem;
-   font-weight: 700;
-   color: #1e293b;
-   line-height: 1;
-   margin-bottom: 0.5rem;
-}
-
-.stat-label {
-   font-size: 0.9rem;
-   color: #64748b;
-   font-weight: 500;
-}
+/* Statistics Grid - REMOVED */
 
 /* Card Styling */
 .card {
@@ -291,18 +215,30 @@ body {
 
 .card-header {
    padding: 2rem 2.5rem;
-   border-bottom: 2px solid #f1f5f9;
+   border-bottom: none;
    display: flex;
    justify-content: space-between;
    align-items: center;
-   background: linear-gradient(to right, #f8fafc, #ffffff);
+   background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
+   color: white;
 }
 
 .card-header h2 {
    font-size: 1.5rem;
    font-weight: 600;
-   color: #1e293b;
+   color: white;
    margin: 0;
+}
+
+.card-header .btn-outline {
+   background: white;
+   color: #7cb342;
+   border: 2px solid white;
+}
+
+.card-header .btn-outline:hover {
+   background: rgba(255, 255, 255, 0.9);
+   color: #6a9c35;
 }
 
 .card-body {
@@ -342,8 +278,19 @@ body {
 }
 
 .empty-icon::before {
-   content: '📋';
-   font-size: 5rem;
+   content: '';
+}
+
+/* SVG clipboard icon */
+.empty-icon::after {
+   content: '';
+   width: 80px;
+   height: 80px;
+   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'/%3E%3Cline x1='9' y1='12' x2='15' y2='12'/%3E%3Cline x1='9' y1='16' x2='15' y2='16'/%3E%3C/svg%3E");
+   background-repeat: no-repeat;
+   background-position: center;
+   background-size: contain;
+   position: absolute;
 }
 
 .empty-state h3 {
@@ -387,41 +334,6 @@ body {
    transform: translateY(-3px);
    box-shadow: 0 15px 40px rgba(132, 204, 22, 0.5);
    background: linear-gradient(135deg, #fde047 0%, #a3e635 100%);
-}
-
-/* Info Cards */
-.info-cards {
-   display: grid;
-   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-   gap: 2rem;
-   margin-top: 3rem;
-}
-
-.info-card {
-   background: white;
-   padding: 2rem;
-   border-radius: 16px;
-   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-   transition: all 0.3s ease;
-   border-top: 4px solid #7fb842;
-}
-
-.info-card:hover {
-   transform: translateY(-4px);
-   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-}
-
-.info-card h3 {
-   font-size: 1.3rem;
-   color: #1e293b;
-   margin-bottom: 1rem;
-   font-weight: 600;
-}
-
-.info-card p {
-   color: #64748b;
-   line-height: 1.6;
-   margin-bottom: 1.5rem;
 }
 
 /* Button Styles */
@@ -501,34 +413,54 @@ body {
    background: #f8fafc;
 }
 
-/* Badge Styles */
+/* Badge Styles - Color Coded */
 .badge {
-   display: inline-block;
-   padding: 0.35rem 0.75rem;
-   border-radius: 6px;
-   font-size: 0.85rem;
-   font-weight: 600;
-   text-transform: capitalize;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .badge-pending {
-   background: #fef3c7;
-   color: #92400e;
+    background: #fff3e0;
+    color: #ef6c00;
 }
 
 .badge-processing {
-   background: #ddd6fe;
-   color: #5b21b6;
+    background: #e3f2fd;
+    color: #1976d2;
 }
 
 .badge-approved {
-   background: #d1fae5;
-   color: #065f46;
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-paid {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-completed {
+    background: #e1f5fe;
+    color: #01579b;
 }
 
 .badge-rejected {
-   background: #fee2e2;
-   color: #991b1b;
+    background: #ffebee;
+    color: #c62828;
+}
+.badge-cancelled {
+    background: rgba(146, 64, 14, 0.15);
+    color: #92400e;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+    text-align: center;
 }
 
 /* Icon Definitions */
@@ -556,148 +488,145 @@ body {
 
 .stat-card:nth-child(1) .stat-icon::before {
    content: '∑';
-   font-size: 1.8rem;
+   font-size: 1.5rem;
 }
 
 .stat-card:nth-child(2) .stat-icon::before {
    content: '◯';
-   font-size: 1.8rem;
+   font-size: 1.5rem;
 }
 
 .stat-card:nth-child(3) .stat-icon::before {
    content: '⟳';
-   font-size: 1.8rem;
+   font-size: 1.5rem;
 }
 
 .stat-card:nth-child(4) .stat-icon::before {
    content: '✓';
-   font-size: 1.8rem;
+   font-size: 1.5rem;
 }
-</style>
 
+.stat-card:nth-child(5) .stat-icon::before {
+   content: '₱';
+   font-size: 1.5rem;
+}
+
+.stat-card:nth-child(6) .stat-icon::before {
+   content: '★';
+   font-size: 1.5rem;
+}
+
+.stat-card:nth-child(7) .stat-icon::before {
+   content: '✗';
+   font-size: 1.5rem;
+}
+
+/* Table View Button - Force Green */
+.table .btn-primary,
+.card-body .btn-primary {
+   background: linear-gradient(135deg, #7fb842, #6a9c35) !important;
+   color: white !important;
+   box-shadow: 0 4px 12px rgba(127, 184, 66, 0.3) !important;
+   border: none !important;
+}
+
+.table .btn-primary:hover,
+.card-body .btn-primary:hover {
+   background: linear-gradient(135deg, #6a9c35, #558b2f) !important;
+   transform: translateY(-2px);
+   box-shadow: 0 6px 16px rgba(127, 184, 66, 0.4) !important;
+}
+
+</style>
 <div class="wrapper">
     <div class="page-wrapper">
         <div class="container">
 
-       <div class="dashboard-banner">
-           <h1>Dashboard</h1>
-           <p>Welcome back, <?php echo htmlspecialchars($user['name']); ?>!</p>
-       </div>
+            <div class="dashboard-banner">
+                <h1>Dashboard</h1>
+                <p>Welcome back, <?php echo htmlspecialchars($user['name']); ?>!</p>
+            </div>
 
-       <!-- Quick Actions -->
-       <div class="quick-actions">
-           <a href="apply.php" class="action-card">
-               <div class="action-icon"></div>
-               <h3>New Application</h3>
-               <p>Submit a new service request</p>
-           </a>
-           <a href="track.php" class="action-card">
-               <div class="action-icon"></div>
-               <h3>Track Application</h3>
-               <p>Check your application status</p>
-           </a>
-           <a href="applications.php" class="action-card">
-               <div class="action-icon"></div>
-               <h3>My Applications</h3>
-               <p>View all your applications</p>
-           </a>
-           <a href="profile.php" class="action-card">
-               <div class="action-icon"></div>
-               <h3>My Profile</h3>
-               <p>Update your information</p>
-           </a>
-       </div>
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="apply.php" class="action-card">
+                    <div class="action-icon"></div>
+                    <h3>New Application</h3>
+                    <p>Submit a new service request</p>
+                </a>
+                <a href="track.php" class="action-card">
+                    <div class="action-icon"></div>
+                    <h3>Track Application</h3>
+                    <p>Check your application status</p>
+                </a>
+                <a href="applications.php" class="action-card">
+                    <div class="action-icon"></div>
+                    <h3>My Applications</h3>
+                    <p>View all your applications</p>
+                </a>
+                <a href="profile.php" class="action-card">
+                    <div class="action-icon"></div>
+                    <h3>My Profile</h3>
+                    <p>Update your information</p>
+                </a>
+            </div>
 
-       <!-- Statistics Cards -->
-       <div class="stats-grid">
-           <div class="stat-card">
-               <div class="stat-icon"></div>
-               <div class="stat-info">
-                   <div class="stat-number"><?php echo $stats['total']; ?></div>
-                   <div class="stat-label">Total Applications</div>
-               </div>
-           </div>
-           <div class="stat-card">
-               <div class="stat-icon"></div>
-               <div class="stat-info">
-                   <div class="stat-number"><?php echo $stats['pending']; ?></div>
-                   <div class="stat-label">Pending Review</div>
-               </div>
-           </div>
-           <div class="stat-card">
-               <div class="stat-icon"></div>
-               <div class="stat-info">
-                   <div class="stat-number"><?php echo $stats['processing']; ?></div>
-                   <div class="stat-label">Processing</div>
-               </div>
-           </div>
-           <div class="stat-card">
-               <div class="stat-icon"></div>
-               <div class="stat-info">
-                   <div class="stat-number"><?php echo $stats['approved']; ?></div>
-                   <div class="stat-label">Approved</div>
-               </div>
-           </div>
-       </div>
+            <!-- Recent Applications -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Recent Applications</h2>
+                    <a href="applications.php" class="btn btn-sm btn-outline">View All</a>
+                </div>
+                <div class="card-body">
+                    <?php if(count($recent_applications) > 0): ?>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Tracking No.</th>
+                                        <th>Service</th>
+                                        <th>Department</th>
+                                        <th>Status</th>
+                                        <th>Date Applied</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach($recent_applications as $app): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo htmlspecialchars($app['tracking_number']); ?></strong>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($app['service_name']); ?></td>
+                                            <td><small><?php echo htmlspecialchars($app['department_name']); ?></small></td>
+                                            <td>
+                                                <span class="badge badge-<?php echo strtolower($app['status']); ?>">
+                                                   <?php echo ucfirst($app['status']); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo formatDate($app['created_at']); ?></td>
+                                            <td>
+                                                <a href="view_application.php?id=<?php echo $app['id']; ?>"
+                                                   class="btn btn-sm btn-primary">View</a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <div class="empty-icon"></div>
+                            <h3>Ready to Get Started?</h3>
+                            <p>No applications submitted yet. Create your first service request and track it every step of the way!</p>
+                            <a href="apply.php" class="btn btn-primary">Create New Application</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
-       <!-- Recent Applications -->
-       <div class="card">
-           <div class="card-header">
-               <h2>Recent Applications</h2>
-               <a href="applications.php" class="btn btn-sm btn-outline">View All</a>
-           </div>
-           <div class="card-body">
-               <?php if(count($recent_applications) > 0): ?>
-                   <div class="table-responsive">
-                       <table class="table">
-                           <thead>
-                               <tr>
-                                   <th>Tracking No.</th>
-                                   <th>Service</th>
-                                   <th>Department</th>
-                                   <th>Purpose</th>
-                                   <th>Status</th>
-                                   <th>Date Applied</th>
-                                   <th>Actions</th>
-                               </tr>
-                           </thead>
-                           <tbody>
-                               <?php foreach($recent_applications as $app): ?>
-                                   <tr>
-                                       <td>
-                                           <strong><?php echo htmlspecialchars($app['tracking_number']); ?></strong>
-                                       </td>
-                                       <td><?php echo htmlspecialchars($app['service_name']); ?></td>
-                                       <td><small><?php echo htmlspecialchars($app['department_name']); ?></small></td>
-                                       <td><?php echo htmlspecialchars(substr($app['purpose'], 0, 50)) . (strlen($app['purpose']) > 50 ? '...' : ''); ?></td>
-                                       <td>
-                                           <span class="badge badge-<?php echo getStatusClass($app['status']); ?>">
-                                               <?php echo ucfirst($app['status']); ?>
-                                           </span>
-                                       </td>
-                                       <td><?php echo formatDate($app['created_at']); ?></td>
-                                       <td>
-                                           <a href="view_application.php?id=<?php echo $app['id']; ?>"
-                                              class="btn btn-sm btn-primary">View</a>
-                                       </td>
-                                   </tr>
-                               <?php endforeach; ?>
-                           </tbody>
-                       </table>
-                   </div>
-               <?php else: ?>
-                   <div class="empty-state">
-                       <div class="empty-icon"></div>
-                       <h3>Ready to Get Started?</h3>
-                       <p>No applications submitted yet. Create your first service request and track it every step of the way!</p>
-                       <a href="apply.php" class="btn btn-primary">Create New Application</a>
-                   </div>
-               <?php endif; ?>
-           </div>
-       </div>
-
-   </div>
-   </div>
+        </div>
+    </div>
 </div>
 
 <?php include '../includes/footer.php'; ?>

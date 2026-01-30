@@ -112,7 +112,6 @@ function getUnreadNotificationCount($pdo, $user_id) {
         return 0;
     }
 }
-
 // Mark notification as read
 function markNotificationAsRead($pdo, $notification_id, $user_id) {
     try {
@@ -134,6 +133,7 @@ function markAllNotificationsAsRead($pdo, $user_id) {
         return false;
     }
 }
+
 
 // Get available document types
 function getDocumentTypes() {
@@ -361,3 +361,4 @@ function getDaysUntil($date) {
     $interval = $now->diff($target);
     return $interval->days;
 }
+

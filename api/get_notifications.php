@@ -11,7 +11,20 @@ if (!isLoggedIn()) {
 
 $userId = $_SESSION['user_id'];
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+$onlyCount = isset($_GET['only_count']) && $_GET['only_count'] === 'true';
 
+// If only count is requested, return early
+if ($onlyCount) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+    $stmt->execute([$userId]);
+    $unreadCount = $stmt->fetchColumn();
+    
+    echo json_encode([
+        'success' => true,
+        'unread_count' => $unreadCount
+    ]);
+    exit();
+}
 try {
     // Get unread count
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");

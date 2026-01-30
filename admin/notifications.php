@@ -7,876 +7,755 @@ if (!isLoggedIn() || !isAdmin()) {
     exit();
 }
 
-// Handle mark all as read
-if (isset($_POST['mark_all_read'])) {
-    try {
-        $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1");
-        $stmt->execute();
-        $_SESSION['success'] = 'All notifications marked as read';
-    } catch(Exception $e) {
-        $_SESSION['error'] = 'Failed to mark all as read';
+// Handle AJAX requests
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
+    header('Content-Type: application/json');
+
+    // Handle mark all as read
+    if (isset($_POST['mark_all_read'])) {
+        try {
+            if (isDepartmentAdmin()) {
+                // Only mark notifications for applications in their department
+                $stmt = $pdo->prepare("
+                UPDATE notifications n
+                INNER JOIN applications a ON n.application_id = a.id
+                SET n.is_read = 1 
+                WHERE n.user_id = ? AND a.department_id = ?
+            ");
+                $stmt->execute([$_SESSION['user_id'], $_SESSION['department_id']]);
+            } else {
+                // Superadmin marks all
+                $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+            }
+            echo json_encode(['success' => true, 'message' => 'All notifications marked as read']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Failed to mark all as read']);
+        }
+        exit();
     }
-    header('Location: notifications.php');
-    exit();
-}
-
-// Handle delete notification
-if (isset($_POST['delete_notification']) && isset($_POST['notification_id'])) {
-    $notification_id = (int)$_POST['notification_id'];
-    try {
-        $stmt = $pdo->prepare("DELETE FROM notifications WHERE id = ?");
-        $stmt->execute([$notification_id]);
-        $_SESSION['success'] = 'Notification deleted successfully';
-    } catch(Exception $e) {
-        $_SESSION['error'] = 'Failed to delete notification';
+    // Handle delete all notifications
+    if (isset($_POST['delete_all'])) {
+        try {
+            if (isDepartmentAdmin()) {
+                // Only delete notifications for applications in their department
+                $stmt = $pdo->prepare("
+                DELETE n FROM notifications n
+                INNER JOIN applications a ON n.application_id = a.id
+                WHERE n.user_id = ? AND a.department_id = ?
+            ");
+                $stmt->execute([$_SESSION['user_id'], $_SESSION['department_id']]);
+            } else {
+                // Superadmin deletes all
+                $stmt = $pdo->prepare("DELETE FROM notifications WHERE user_id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+            }
+            echo json_encode(['success' => true, 'message' => 'All notifications deleted successfully']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Failed to delete all notifications']);
+        }
+        exit();
     }
-    header('Location: notifications.php');
-    exit();
-}
 
-// Handle mark as read
-if (isset($_POST['mark_read']) && isset($_POST['notification_id'])) {
-    $notification_id = (int)$_POST['notification_id'];
-    try {
-        $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE id = ?");
-        $stmt->execute([$notification_id]);
-        $_SESSION['success'] = 'Notification marked as read';
-    } catch(Exception $e) {
-        $_SESSION['error'] = 'Failed to mark as read';
+    // Handle delete notification
+    if (isset($_POST['delete_notification']) && isset($_POST['notification_id'])) {
+        $notification_id = (int) $_POST['notification_id'];
+        try {
+            $stmt = $pdo->prepare("DELETE FROM notifications WHERE id = ? AND user_id = ?");
+            $stmt->execute([$notification_id, $_SESSION['user_id']]);
+            echo json_encode(['success' => true, 'message' => 'Notification deleted successfully']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Failed to delete notification']);
+        }
+        exit();
     }
-    header('Location: notifications.php');
-    exit();
+
+    // Handle mark as read
+    if (isset($_POST['mark_read']) && isset($_POST['notification_id'])) {
+        $notification_id = (int) $_POST['notification_id'];
+        try {
+            $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
+            $stmt->execute([$notification_id, $_SESSION['user_id']]);
+            echo json_encode(['success' => true, 'message' => 'Notification marked as read']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Failed to mark as read']);
+        }
+        exit();
+    }
+
+    // Handle fetch notifications (for filters and pagination)
+    if (isset($_GET['fetch_notifications'])) {
+        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+        $per_page = 20;
+        $offset = ($page - 1) * $per_page;
+
+        $user_filter = isset($_GET['user_id']) ? (int) $_GET['user_id'] : 0;
+        $type_filter = isset($_GET['type']) ? $_GET['type'] : '';
+        $read_filter = isset($_GET['read']) ? $_GET['read'] : '';
+
+        $where = [];
+        $params = [];
+
+        $where[] = "n.user_id = ?";
+        $params[] = $_SESSION['user_id'];
+
+        if ($read_filter !== '') {
+            $where[] = "n.is_read = ?";
+            $params[] = $read_filter === 'read' ? 1 : 0;
+        }
+        // ADD DEPARTMENT FILTERING
+        if (isDepartmentAdmin()) {
+            $where[] = "a.department_id = ?";
+            $params[] = $_SESSION['department_id'];
+        }
+        if ($user_filter) {
+            $where[] = "a.user_id = ?";  // ✅ CORRECT
+            $params[] = $user_filter;
+        }
+
+        if ($type_filter) {
+            $where[] = "n.type = ?";
+            $params[] = $type_filter;
+        }
+
+        $where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        // Get total count
+        $count_sql = "SELECT COUNT(*) FROM notifications n 
+                      LEFT JOIN applications a ON n.application_id = a.id 
+                      $where_clause";
+        $count_stmt = $pdo->prepare($count_sql);
+        $count_stmt->execute($params);
+        $total = $count_stmt->fetchColumn();
+        $total_pages = ceil($total / $per_page);
+
+        // Get notifications
+        $sql = "SELECT n.*, 
+                u.name as user_name, 
+                u.email as user_email,
+                a.tracking_number,
+                applicant.name as applicant_name
+                FROM notifications n
+                LEFT JOIN users u ON n.user_id = u.id
+                LEFT JOIN applications a ON n.application_id = a.id
+                LEFT JOIN users applicant ON a.user_id = applicant.id
+                $where_clause
+                ORDER BY n.created_at DESC
+                LIMIT $per_page OFFSET $offset";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get statistics
+        $current_user = $_SESSION['user_id'];
+
+        // Build department filter for stats
+        $dept_stats_where = '';
+        $dept_stats_params = [];
+        if (isDepartmentAdmin()) {
+            $dept_stats_where = ' AND EXISTS (
+            SELECT 1 FROM applications a 
+            WHERE a.id = notifications.application_id 
+            AND a.department_id = ?
+        )';
+            $dept_stats_params = [$_SESSION['department_id']];
+        }
+        $stats_stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ?" . $dept_stats_where);
+        $stats_stmt->execute(array_merge([$current_user], $dept_stats_params));
+        $total_notifs = $stats_stmt->fetchColumn();
+
+        $stats_stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE is_read = 0 AND user_id = ?" . $dept_stats_where);
+        $stats_stmt->execute(array_merge([$current_user], $dept_stats_params));
+        $unread_notifs = $stats_stmt->fetchColumn();
+
+        $stats_stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE DATE(created_at) = CURDATE() AND user_id = ?" . $dept_stats_where);
+        $stats_stmt->execute(array_merge([$current_user], $dept_stats_params));
+        $today_notifs = $stats_stmt->fetchColumn();
+
+        $stats = [
+            'total' => $total_notifs,
+            'unread' => $unread_notifs,
+            'today' => $today_notifs
+        ];
+
+        echo json_encode([
+            'success' => true,
+            'notifications' => $notifications,
+            'stats' => $stats,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total' => $total
+            ]
+        ]);
+        exit();
+    }
 }
 
-// Pagination
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 20;
-$offset = ($page - 1) * $per_page;
-
-// Filters
-$user_filter = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
-$type_filter = isset($_GET['type']) ? $_GET['type'] : '';
-$read_filter = isset($_GET['read']) ? $_GET['read'] : '';
-
-// Build query
-$where = [];
-$params = [];
-
-if ($user_filter) {
-    $where[] = "n.user_id = ?";
-    $params[] = $user_filter;
+// Get department filter for users list
+if (isDepartmentAdmin()) {
+    $dept_id = $_SESSION['department_id'];
+    $users = $pdo->prepare("
+        SELECT DISTINCT u.id, u.name 
+        FROM users u
+        INNER JOIN applications a ON u.id = a.user_id
+        WHERE u.role = 'user' AND a.department_id = ?
+        ORDER BY u.name
+    ");
+    $users->execute([$dept_id]);
+    $users = $users->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $users = $pdo->query("
+        SELECT DISTINCT u.id, u.name 
+        FROM users u
+        INNER JOIN applications a ON u.id = a.user_id
+        WHERE u.role = 'user'
+        ORDER BY u.name
+    ")->fetchAll(PDO::FETCH_ASSOC);
 }
+// Around line 100, after getting the $users array, add thi
 
-if ($type_filter) {
-    $where[] = "n.type = ?";
-    $params[] = $type_filter;
-}
-
-if ($read_filter !== '') {
-    $where[] = "n.is_read = ?";
-    $params[] = $read_filter === 'read' ? 1 : 0;
-}
-
-$where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-
-// Get total count
-$count_sql = "SELECT COUNT(*) FROM notifications n $where_clause";
-$count_stmt = $pdo->prepare($count_sql);
-$count_stmt->execute($params);
-$total = $count_stmt->fetchColumn();
-$total_pages = ceil($total / $per_page);
-
-// Get notifications
-$sql = "SELECT n.*, u.name as user_name, u.email as user_email,
-        a.tracking_number
-        FROM notifications n
-        LEFT JOIN users u ON n.user_id = u.id
-        LEFT JOIN applications a ON n.application_id = a.id
-        $where_clause
-        ORDER BY n.created_at DESC
-        LIMIT $per_page OFFSET $offset";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Get statistics
-$stats = [
-    'total' => $pdo->query("SELECT COUNT(*) FROM notifications")->fetchColumn() ?: 0,
-    'unread' => $pdo->query("SELECT COUNT(*) FROM notifications WHERE is_read = 0")->fetchColumn() ?: 0,
-    'today' => $pdo->query("SELECT COUNT(*) FROM notifications WHERE DATE(created_at) = CURDATE()")->fetchColumn() ?: 0
+$types = [
+    'new_application',
+    'cancelled_application',
+    'payment_submitted'
 ];
 
-// Get all users for filter
-$users = $pdo->query("SELECT id, name FROM users ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-
-$pageTitle = 'Notifications';
 include '../includes/header.php';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --primary: #8bc34a;
-            --primary-dark: #689f38;
-            --secondary: #558b2f;
-            --background: #f5f7fa;
-            --surface: #ffffff;
-            --text-primary: #2c3e50;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-            --radius: 12px;
-        }
+    <link rel="stylesheet" href="../assets/css/admin-responsive.css">
+    <link rel="stylesheet" href="../assets/css/admin/notifications_styles.css">
 
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--background);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 1.5rem 1.5rem 1.5rem;
-        }
-
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            border-radius: var(--radius);
-            padding: 2rem;
-            color: white;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .page-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .header-content h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-        }
-
-        .header-content p {
-            font-size: 1rem;
-            opacity: 0.95;
-        }
-
-        .header-actions {
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn {
-            padding: 0.625rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .btn-white {
-            background: rgba(255, 255, 255, 0.95);
-            color: var(--primary);
-        }
-
-        .btn-white:hover {
-            background: white;
-            transform: translateY(-2px);
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-            border-color: var(--primary);
-        }
-
-        .stat-icon-wrapper {
-            margin-bottom: 1rem;
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-
-        .stat-icon-primary {
-            background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
-        }
-
-        .stat-icon-warning {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-        }
-
-        .stat-icon-info {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .stat-content h3 {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        /* Filters */
-        .filters-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .filters-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .filters-header h3 {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.1rem;
-            align-items: stretch;
-        }
-
-        .filter-group label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .filter-group select {
-            width: 100%;
-            padding: 0.625rem;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            background: white;
-            transition: all 0.2s ease;
-            height: 42px;
-        }
-
-        .filter-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.1);
-        }
-
-
-        .filter-group .btn {
-            width: 100%;
-            margin-top: auto;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px !important;
-        }
-
-        .btn-primary {
-            border-radius: 8px !important;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
-        }
-
-        .btn-secondary {
-            border-radius: 8px !important;
-        }
-
-        .btn-secondary:hover {
-            background: #cbd5e1;
-            color: var(--text-primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(226, 232, 240, 0.5);
-        }
-
-        .btn-secondary {
-            background: #e2e8f0;
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-            background: #cbd5e1;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 195, 74, 0.3);
-        }
-
-        /* Notifications List */
-        .notifications-list {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .notification-item {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            transition: background 0.2s ease;
-        }
-
-        .notification-item:hover {
-            background: #f8fafc;
-        }
-
-        .notification-item.unread {
-            background: #f0f9ff;
-        }
-
-        .notification-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .notification-icon.info {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .notification-icon.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .notification-icon.warning {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .notification-icon.danger {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .notification-content {
-            flex: 1;
-        }
-
-        .notification-title {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .notification-meta {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            display: flex;
-            gap: 1rem;
-        }
-
-        .notification-message {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .notification-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-left: auto;
-            flex-shrink: 0;
-        }
-
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-icon-read {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-icon-read:hover {
-            background: #2563eb;
-            transform: scale(1.05);
-        }
-
-        .btn-icon-delete {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-icon-delete:hover {
-            background: #dc2626;
-            transform: scale(1.05);
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .pagination a, .pagination span {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-primary);
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .pagination a:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .pagination .active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: var(--radius);
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .alert-success {
-            background: #dcfce7;
-            color: #166534;
-            border-left: 4px solid #22c55e;
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border-left: 4px solid #ef4444;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-secondary);
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.3;
-        }
-
-        @media (max-width: 1024px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .filters-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            .filters-grid { grid-template-columns: 1fr; }
-        }
-        /* Toast Notification */
-        .toast-notification {
-            position: fixed;
-            top: 80px;
-            left: 20px;
-            background: white;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            z-index: 9999;
-            animation: slideInLeft 0.4s ease, fadeOut 0.4s ease 2.6s;
-            min-width: 300px;
-            max-width: 500px;
-        }
-
-        .toast-success {
-            border-left: 4px solid #22c55e;
-        }
-
-        .toast-error {
-            border-left: 4px solid #ef4444;
-        }
-
-        .toast-icon {
-            font-size: 1.5rem;
-        }
-
-        .toast-message {
-            flex: 1;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        @keyframes slideInLeft {
-            from {
-                transform: translateX(-400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translateX(-400px);
-            }
-        }
-    </style>
 </head>
+
 <body>
 
-<div class="container">
-    <!-- Header -->
-    <div class="page-header">
-        <div class="header-content">
-            <h1><i class="fas fa-bell"></i> Notifications</h1>
-            <p>Manage and track all system notifications</p>
-        </div>
-        <div class="header-actions">
-            <form method="POST" action="" style="display: inline;">
-                <input type="hidden" name="mark_all_read" value="1">
-                <button type="submit" class="btn btn-white">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1></i> Notifications</h1>
+                <p>Manage and track all system notifications</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="header-btn" onclick="markAllAsRead()" id="markAllBtn"
+                    style="display: none;">
                     <i class="fas fa-check-double"></i> Mark All Read
                 </button>
+                <button type="button" class="header-btn btn-danger" onclick="showDeleteAllModal()" id="clearAllBtn"
+                    style="display: none;">
+                    <i class="fas fa-trash-alt"></i> Clear All Notifications
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon stat-icon-primary">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h3>Total Notifications</h3>
+                    <div class="stat-value" id="stat-total">0</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon stat-icon-warning">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h3>Unread</h3>
+                    <div class="stat-value" id="stat-unread">0</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon stat-icon-info">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h3>Today</h3>
+                    <div class="stat-value" id="stat-today">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="filters-header">
+                <i class="fas fa-filter"></i>
+                <h3>Filter Notifications</h3>
+            </div>
+
+            <form id="filterForm">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Applicant</label>
+                        <select name="user_id" id="filter-user">
+                            <option value="">All Applicants</option>
+                            <?php foreach ($users as $user): ?>
+                                <option value="<?php echo $user['id']; ?>">
+                                    <?php echo htmlspecialchars($user['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Type</label>
+                        <select name="type" id="filter-type">
+                            <option value="">All Types</option>
+                            <?php foreach ($types as $type): ?>
+                                <option value="<?php echo htmlspecialchars($type); ?>">
+                                    <?php echo ucwords(str_replace('_', ' ', $type)); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select name="read" id="filter-read">
+                            <option value="">All Status</option>
+                            <option value="unread">Unread</option>
+                            <option value="read">Read</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                            <i class="fas fa-sync-alt"></i> Reset
+                        </button>
+                    </div>
+
+                </div>
             </form>
         </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="notifications-list" id="notificationsList">
+            <!-- Notifications will be loaded here via AJAX -->
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationContainer">
+            <!-- Pagination will be loaded here via AJAX -->
+        </div>
     </div>
 
-
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon stat-icon-primary">
-                    <i class="fas fa-bell"></i>
-                </div>
+    <!-- Delete All Notifications Modal -->
+    <div id="deleteAllModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-icon">
+                <i class="fas fa-trash-alt"></i>
             </div>
-            <div class="stat-content">
-                <h3>Total Notifications</h3>
-                <div class="stat-value"><?php echo number_format($stats['total']); ?></div>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon stat-icon-warning">
-                    <i class="fas fa-envelope"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <h3>Unread</h3>
-                <div class="stat-value"><?php echo number_format($stats['unread']); ?></div>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon-wrapper">
-                <div class="stat-icon stat-icon-info">
-                    <i class="fas fa-calendar-day"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <h3>Today</h3>
-                <div class="stat-value"><?php echo number_format($stats['today']); ?></div>
+            <h2>Clear All Notifications</h2>
+            <p>Are you sure you want to delete ALL notifications? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeDeleteAllModal()">Cancel</button>
+                <button class="btn-delete" onclick="confirmDeleteAll()">Delete All</button>
             </div>
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-card">
-        <div class="filters-header">
-            <i class="fas fa-filter" style="color: var(--primary);"></i>
-            <h3>Filter Notifications</h3>
-        </div>
-
-        <form method="GET" action="">
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label>User</label>
-                    <select name="user_id">
-                        <option value="">All Users</option>
-                        <?php foreach ($users as $user): ?>
-                            <option value="<?php echo $user['id']; ?>" <?php echo $user_filter == $user['id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($user['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label>Type</label>
-                    <select name="type">
-                        <option value="">All Types</option>
-                        <option value="status_update" <?php echo $type_filter === 'status_update' ? 'selected' : ''; ?>>Status Update</option>
-                        <option value="payment" <?php echo $type_filter === 'payment' ? 'selected' : ''; ?>>Payment</option>
-                        <option value="approval" <?php echo $type_filter === 'approval' ? 'selected' : ''; ?>>Approval</option>
-                        <option value="rejection" <?php echo $type_filter === 'rejection' ? 'selected' : ''; ?>>Rejection</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label>Status</label>
-                    <select name="read">
-                        <option value="">All Status</option>
-                        <option value="unread" <?php echo $read_filter === 'unread' ? 'selected' : ''; ?>>Unread</option>
-                        <option value="read" <?php echo $read_filter === 'read' ? 'selected' : ''; ?>>Read</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <a href="notifications.php" class="btn btn-secondary">
-                        <i class="fas fa-sync-alt"></i> Reset
-                    </a>
-                </div>
-
-                <div class="filter-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search"></i> Apply Filters
-                    </button>
-                </div>
+    <!-- Delete Single Notification Modal -->
+    <div id="deleteSingleModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-icon">
+                <i class="fas fa-trash-alt"></i>
             </div>
-        </form>
+            <h2>Delete Notification</h2>
+            <p>Are you sure you want to delete this notification? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeDeleteSingleModal()">Cancel</button>
+                <button class="btn-delete" onclick="confirmDeleteSingle()">Delete</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Notifications List -->
-    <div class="notifications-list">
-        <?php if (empty($notifications)): ?>
-            <div class="empty-state">
-                <i class="fas fa-bell-slash"></i>
-                <h3>No notifications found</h3>
-                <p>There are no notifications matching your filters.</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($notifications as $notification): ?>
-                <div class="notification-item <?php echo !$notification['is_read'] ? 'unread' : ''; ?>">
-                    <div class="notification-icon <?php echo $notification['type']; ?>">
+    <script>
+        let currentPage = 1;
+        let currentDeleteId = null;
+        let autoRefreshInterval;
+        let lastNotificationId = 0;
+
+        // Load notifications via AJAX
+        function loadNotificationsPage(page = 1, silent = false) {
+            const filters = new URLSearchParams({
+                ajax: 'true',
+                fetch_notifications: 'true',
+                page: page,
+                user_id: document.getElementById('filter-user').value,
+                type: document.getElementById('filter-type').value,
+                read: document.getElementById('filter-read').value
+            });
+
+            fetch('<?php echo BASE_URL; ?>/admin/notifications.php?' + filters.toString())
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update stats
+                        document.getElementById('stat-total').textContent = data.stats.total.toLocaleString();
+                        document.getElementById('stat-unread').textContent = data.stats.unread.toLocaleString();
+                        document.getElementById('stat-today').textContent = data.stats.today.toLocaleString();
+
+                        const markAllBtn = document.getElementById('markAllBtn');
+                        const clearAllBtn = document.getElementById('clearAllBtn');
+
+                        if (data.stats.unread > 0) {
+                            markAllBtn.style.display = 'inline-flex';
+                        } else {
+                            markAllBtn.style.display = 'none';
+                        }
+
+                        // Hide Clear All button if no notifications
+                        if (data.stats.total > 0) {
+                            clearAllBtn.style.display = 'inline-flex';
+                        } else {
+                            clearAllBtn.style.display = 'none';
+                        }
+
+                        // Check if there's a new notification
+                        if (data.notifications.length > 0) {
+                            const newestId = data.notifications[0].id;
+                            if (lastNotificationId > 0 && newestId > lastNotificationId && !silent) {
+                                showToast('New notification received!', 'success');
+                            }
+                            lastNotificationId = Math.max(lastNotificationId, newestId);
+                        }
+
+                        renderNotifications(data.notifications);
+                        renderPagination(data.pagination);
+                        currentPage = data.pagination.current_page;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                });
+        }
+
+        // Render notifications
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notificationsList');
+
+            if (notifications.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-bell-slash"></i>
+                    <h3>No notifications found</h3>
+                    <p>There are no notifications matching your filters.</p>
+                </div>
+            `;
+                return;
+            }
+
+            let html = '';
+            notifications.forEach(notif => {
+                const unreadClass = notif.is_read == 0 ? 'unread' : '';
+                const applicantInfo = notif.applicant_name ? `<span><i class="fas fa-user"></i> ${escapeHtml(notif.applicant_name)}</span>` : '';
+                const trackingInfo = notif.tracking_number ? `<span><i class="fas fa-hashtag"></i> ${escapeHtml(notif.tracking_number)}</span>` : '';
+                const markReadBtn = notif.is_read == 0 ? `
+                <button type="button" class="btn-icon btn-icon-read" onclick="markAsRead(${notif.id})" title="Mark as Read">
+                    <i class="fas fa-eye"></i>
+                </button>
+            ` : '';
+
+                html += `
+                <div class="notification-item ${unreadClass}" id="notif-${notif.id}">
+                    <div class="notification-icon ${notif.type}">
                         <i class="fas fa-bell"></i>
                     </div>
                     <div class="notification-content">
-                        <div class="notification-title">
-                            <?php echo htmlspecialchars($notification['title']); ?>
-                        </div>
+                        <div class="notification-title">${notif.title}</div>
                         <div class="notification-meta">
-                            <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($notification['user_name']); ?></span>
-                            <?php if ($notification['tracking_number']): ?>
-                                <span><i class="fas fa-hashtag"></i> <?php echo htmlspecialchars($notification['tracking_number']); ?></span>
-                            <?php endif; ?>
-                            <span><i class="fas fa-clock"></i> <?php echo date('M d, Y h:i A', strtotime($notification['created_at'])); ?></span>
+                            ${applicantInfo}
+                            ${trackingInfo}
+                            <span><i class="fas fa-clock"></i> ${formatDate(notif.created_at)}</span>
                         </div>
-                        <div class="notification-message">
-                            <?php echo htmlspecialchars($notification['message']); ?>
-                        </div>
+                        <div class="notification-message">${notif.message}</div>
                     </div>
                     <div class="notification-actions">
-                        <?php if (!$notification['is_read']): ?>
-                            <form method="POST" action="" style="display: inline;">
-                                <input type="hidden" name="notification_id" value="<?php echo $notification['id']; ?>">
-                                <input type="hidden" name="mark_read" value="1">
-                                <button type="submit" class="btn-icon btn-icon-read" title="Mark as Read">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                        <form method="POST" action="" style="display: inline;">
-                            <input type="hidden" name="notification_id" value="<?php echo $notification['id']; ?>">
-                            <input type="hidden" name="delete_notification" value="1">
-                            <button type="submit" class="btn-icon btn-icon-delete" title="Delete" onclick="return confirm('Delete this notification?')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        ${markReadBtn}
+                        <button type="button" class="btn-icon btn-icon-delete" onclick="showDeleteSingleModal(${notif.id})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
+            `;
+            });
 
-    <!-- Pagination -->
-    <?php if ($total_pages > 1): ?>
-        <div class="pagination">
-            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                <?php
-                $query_params = $_GET;
-                $query_params['page'] = $i;
-                $query_string = http_build_query($query_params);
-                ?>
-                <?php if ($i == $page): ?>
-                    <span class="active"><?php echo $i; ?></span>
-                <?php else: ?>
-                    <a href="?<?php echo $query_string; ?>"><?php echo $i; ?></a>
-                <?php endif; ?>
-            <?php endfor; ?>
-        </div>
-    <?php endif; ?>
-</div>
-<script>
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast-notification toast-${type}`;
-    
-    const icon = type === 'success' ? '✓' : '✕';
-    const iconColor = type === 'success' ? '#22c55e' : '#ef4444';
-    
-    toast.innerHTML = `
-        <div class="toast-icon" style="color: ${iconColor};">${icon}</div>
-        <div class="toast-message">${message}</div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
+            container.innerHTML = html;
+        }
 
-// Show toast on page load
-document.addEventListener('DOMContentLoaded', function() {
-    <?php if (isset($_SESSION['success'])): ?>
-        showToast('<?php echo addslashes($_SESSION['success']); ?>', 'success');
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
-    
-    <?php if (isset($_SESSION['error'])): ?>
-        showToast('<?php echo addslashes($_SESSION['error']); ?>', 'error');
-        <?php unset($_SESSION['error']); ?>
-    <?php endif; ?>
-});
-</script>
+        // Render pagination
+        function renderPagination(pagination) {
+            const container = document.getElementById('paginationContainer');
+
+            if (pagination.total_pages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                const activeClass = i === pagination.current_page ? 'active' : '';
+                if (i === pagination.current_page) {
+                    html += `<span class="${activeClass}">${i}</span>`;
+                } else {
+                    html += `<a href="javascript:void(0)" onclick="loadNotificationsPage(${i})">${i}</a>`;
+                }
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('filter-user').value = '';
+            document.getElementById('filter-type').value = '';
+            document.getElementById('filter-read').value = '';
+            loadNotificationsPage(1);
+        }
+
+        // Mark all as read
+        function markAllAsRead() {
+            fetch('notifications.php?ajax=true', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'mark_all_read=1'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        loadNotificationsPage(currentPage);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Failed to mark all as read', 'error');
+                });
+        }
+
+        // Mark single notification as read
+        function markAsRead(notificationId) {
+            fetch('notifications.php?ajax=true', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `mark_read=1&notification_id=${notificationId}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        loadNotificationsPage(currentPage);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Failed to mark as read', 'error');
+                });
+        }
+
+        // Delete All Modal
+        function showDeleteAllModal() {
+            document.getElementById('deleteAllModal').classList.add('active');
+        }
+
+        function closeDeleteAllModal() {
+            document.getElementById('deleteAllModal').classList.remove('active');
+        }
+
+        function confirmDeleteAll() {
+            fetch('notifications.php?ajax=true', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'delete_all=1'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    closeDeleteAllModal();
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        loadNotificationsPage(1);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    closeDeleteAllModal();
+                    showToast('Failed to delete all notifications', 'error');
+                });
+        }
+
+        // Delete Single Modal
+        function showDeleteSingleModal(notificationId) {
+            currentDeleteId = notificationId;
+            document.getElementById('deleteSingleModal').classList.add('active');
+        }
+
+        function closeDeleteSingleModal() {
+            document.getElementById('deleteSingleModal').classList.remove('active');
+            currentDeleteId = null;
+        }
+
+        function confirmDeleteSingle() {
+            if (currentDeleteId) {
+                fetch('notifications.php?ajax=true', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `delete_notification=1&notification_id=${currentDeleteId}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        closeDeleteSingleModal();
+                        if (data.success) {
+                            showToast(data.message, 'success');
+                            loadNotificationsPage(currentPage);
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        closeDeleteSingleModal();
+                        showToast('Failed to delete notification', 'error');
+                    });
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeDeleteAllModal();
+                closeDeleteSingleModal();
+            }
+        });
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+
+            const icon = type === 'success' ? '✓' : '✕';
+            const iconColor = type === 'success' ? '#22c55e' : '#ef4444';
+
+            toast.innerHTML = `
+            <div class="toast-icon" style="color: ${iconColor};">${icon}</div>
+            <div class="toast-message">${message}</div>
+        `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Helper functions
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Ultra-fast auto-refresh (every 500ms = 0.5 seconds)
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+
+            // Check for new notifications every 500 milliseconds
+            autoRefreshInterval = setInterval(function () {
+                loadNotificationsPage(currentPage, true);
+            }, 500); // 500ms = half a second
+        }
+
+        // Start when page loads
+        // Start when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            loadNotificationsPage(1, true);
+            startAutoRefresh();
+            console.log('✅ Auto-refresh enabled (checking every 0.5 seconds)');
+
+            // Add event listeners to filter dropdowns
+            document.getElementById('filter-user').addEventListener('change', function () {
+                loadNotificationsPage(1);
+            });
+
+            document.getElementById('filter-type').addEventListener('change', function () {
+                loadNotificationsPage(1);
+            });
+
+            document.getElementById('filter-read').addEventListener('change', function () {
+                loadNotificationsPage(1);
+            });
+        });
+
+        // Stop when leaving page
+        window.addEventListener('beforeunload', function () {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+
+    </script>
 </body>
+
 </html>
 
 <?php include '../includes/footer.php'; ?>

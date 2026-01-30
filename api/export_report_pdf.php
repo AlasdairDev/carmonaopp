@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/functions.php';
-
+require_once __DIR__ . '/../includes/security.php';
 // Check if user is admin
 if (!isLoggedIn() || !isAdmin()) {
     http_response_code(403);
@@ -20,6 +20,10 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $date_from = isset($_POST['date_from']) ? $_POST['date_from'] : (isset($_GET['date_from']) ? $_GET['date_from'] : date('Y-m-01'));
 $date_to = isset($_POST['date_to']) ? $_POST['date_to'] : (isset($_GET['date_to']) ? $_GET['date_to'] : date('Y-m-t'));
 
+// Get department filter
+$dept_filter_data = getDepartmentFilter('a');
+$dept_where = $dept_filter_data['where'] ? ' AND ' . $dept_filter_data['where'] : '';
+$dept_params = $dept_filter_data['params'];
 // Get chart images from POST
 $chart_status = isset($_POST['chart_status']) ? $_POST['chart_status'] : '';
 $chart_department = isset($_POST['chart_department']) ? $_POST['chart_department'] : '';
@@ -27,92 +31,95 @@ $chart_trend = isset($_POST['chart_trend']) ? $_POST['chart_trend'] : '';
 
 try {
     // Fetch all the data (same as reports.php)
-    
+
     // Applications by status
+    $where_clause = "DATE(a.created_at) BETWEEN ? AND ?" . $dept_where;
+    $params = array_merge([$date_from, $date_to], $dept_params);
+
     $stmt = $pdo->prepare("
-        SELECT status, COUNT(*) as count
-        FROM applications
-        WHERE DATE(created_at) BETWEEN ? AND ?
-        GROUP BY status
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    SELECT a.status, COUNT(*) as count
+    FROM applications a
+    WHERE $where_clause
+    GROUP BY a.status
+");
+    $stmt->execute($params);
     $status_data = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
     // Applications by service
     $stmt = $pdo->prepare("
-        SELECT s.service_name, COUNT(*) as count
-        FROM applications a
-        JOIN services s ON a.service_id = s.id
-        WHERE DATE(a.created_at) BETWEEN ? AND ?
-        GROUP BY s.id, s.service_name
-        ORDER BY count DESC
-        LIMIT 10
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    SELECT s.service_name, COUNT(*) as count
+    FROM applications a
+    JOIN services s ON a.service_id = s.id
+    WHERE $where_clause
+    GROUP BY s.id, s.service_name
+    ORDER BY count DESC
+    LIMIT 10
+");
+    $stmt->execute($params);
     $service_data = $stmt->fetchAll();
 
     // Applications by department
     $stmt = $pdo->prepare("
-        SELECT d.name as department_name, COUNT(*) as count
-        FROM applications a
-        JOIN departments d ON a.department_id = d.id
-        WHERE DATE(a.created_at) BETWEEN ? AND ?
-        GROUP BY d.id, d.name
-        ORDER BY count DESC
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    SELECT d.name as department_name, COUNT(*) as count
+    FROM applications a
+    JOIN departments d ON a.department_id = d.id
+    WHERE $where_clause
+    GROUP BY d.id, d.name
+    ORDER BY count DESC
+");
+    $stmt->execute($params);
     $department_data = $stmt->fetchAll();
 
     // Revenue by service
     $stmt = $pdo->prepare("
-        SELECT s.service_name, SUM(s.base_fee) as total_fee, COUNT(*) as count
-        FROM applications a
-        JOIN services s ON a.service_id = s.id
-        WHERE DATE(a.created_at) BETWEEN ? AND ?
-        GROUP BY s.id, s.service_name
-        ORDER BY total_fee DESC
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    SELECT s.service_name, SUM(s.base_fee) as total_fee, COUNT(*) as count
+    FROM applications a
+    JOIN services s ON a.service_id = s.id
+    WHERE $where_clause
+    GROUP BY s.id, s.service_name
+    ORDER BY total_fee DESC
+");
+    $stmt->execute($params);
     $revenue_data = $stmt->fetchAll();
 
     // Processing time analysis
     $stmt = $pdo->prepare("
-        SELECT 
-            AVG(DATEDIFF(updated_at, created_at)) as avg_days,
-            MIN(DATEDIFF(updated_at, created_at)) as min_days,
-            MAX(DATEDIFF(updated_at, created_at)) as max_days
-        FROM applications
-        WHERE status IN ('Approved', 'Completed', 'Rejected')
-        AND DATE(created_at) BETWEEN ? AND ?
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    SELECT 
+        AVG(DATEDIFF(a.updated_at, a.created_at)) as avg_days,
+        MIN(DATEDIFF(a.updated_at, a.created_at)) as min_days,
+        MAX(DATEDIFF(a.updated_at, a.created_at)) as max_days
+    FROM applications a
+    WHERE a.status IN ('Approved', 'Completed', 'Rejected')
+    AND $where_clause
+");
+    $stmt->execute($params);
     $processing_stats = $stmt->fetch();
 
     // Top applicants
     $stmt = $pdo->prepare("
-        SELECT u.name, u.email, COUNT(a.id) as total_apps
-        FROM applications a
-        JOIN users u ON a.user_id = u.id
-        WHERE DATE(a.created_at) BETWEEN ? AND ?
-        GROUP BY a.user_id
-        ORDER BY total_apps DESC
-        LIMIT 10
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    SELECT u.name, u.email, COUNT(a.id) as total_apps
+    FROM applications a
+    JOIN users u ON a.user_id = u.id
+    WHERE $where_clause
+    GROUP BY a.user_id, u.name, u.email
+    ORDER BY total_apps DESC
+    LIMIT 10
+");
+    $stmt->execute($params);
     $top_applicants = $stmt->fetchAll();
 
     // Overall statistics
     $total_apps = array_sum($status_data);
     $total_revenue_stmt = $pdo->prepare("
-        SELECT SUM(s.base_fee) 
-        FROM applications a 
-        JOIN services s ON a.service_id = s.id 
-        WHERE DATE(a.created_at) BETWEEN ? AND ?
-    ");
-    $total_revenue_stmt->execute([$date_from, $date_to]);
+    SELECT SUM(s.base_fee) 
+    FROM applications a 
+    JOIN services s ON a.service_id = s.id 
+    WHERE $where_clause
+");
+    $total_revenue_stmt->execute($params);
     $total_revenue = $total_revenue_stmt->fetchColumn();
 
-    $approval_rate = $total_apps > 0 
+    $approval_rate = $total_apps > 0
         ? round((($status_data['Approved'] ?? 0) + ($status_data['Completed'] ?? 0)) / $total_apps * 100, 1)
         : 0;
 
@@ -264,7 +271,7 @@ try {
             </tr>
         </thead>
         <tbody>';
-    
+
     foreach ($status_data as $status => $count) {
         $percentage = $total_apps > 0 ? round(($count / $total_apps) * 100, 1) : 0;
         $html .= '
@@ -274,7 +281,7 @@ try {
                 <td align="right" class="highlight">' . $percentage . '%</td>
             </tr>';
     }
-    
+
     $html .= '
         </tbody>
     </table>
@@ -289,7 +296,7 @@ try {
             </tr>
         </thead>
         <tbody>';
-    
+
     foreach ($department_data as $dept) {
         $html .= '
             <tr>
@@ -297,7 +304,7 @@ try {
                 <td align="right" class="highlight"><b>' . number_format($dept['count']) . '</b></td>
             </tr>';
     }
-    
+
     $html .= '
         </tbody>
     </table>
@@ -314,7 +321,7 @@ try {
             </tr>
         </thead>
         <tbody>';
-    
+
     foreach ($revenue_data as $service) {
         $avg_fee = $service['count'] > 0 ? $service['total_fee'] / $service['count'] : 0;
         $html .= '
@@ -325,7 +332,7 @@ try {
                 <td align="right">PHP ' . number_format($avg_fee, 2) . '</td>
             </tr>';
     }
-    
+
     $html .= '
         </tbody>
     </table>
@@ -335,7 +342,7 @@ try {
     
     <!-- Charts Section -->
     <div class="section-title">Visual Analytics</div>';
-    
+
     // Add Status Chart if available
     if (!empty($chart_status)) {
         $html .= '<div style="text-align: center; margin-bottom: 20px;">
@@ -343,7 +350,7 @@ try {
             <img src="' . $chart_status . '" style="width: 450px; height: auto;" />
         </div>';
     }
-    
+
     // Add Department Chart if available
     if (!empty($chart_department)) {
         $html .= '<div style="text-align: center; margin-bottom: 20px;">
@@ -351,7 +358,7 @@ try {
             <img src="' . $chart_department . '" style="width: 550px; height: auto;" />
         </div>';
     }
-    
+
     // Add Trend Chart if available (on same page as other charts)
     if (!empty($chart_trend)) {
         $html .= '<div style="page-break-before: always;"></div>
@@ -360,7 +367,7 @@ try {
             <img src="' . $chart_trend . '" style="width: 700px; height: auto;" />
         </div>';
     }
-    
+
     $html .= '
     
     <!-- Top Applicants -->
@@ -375,7 +382,7 @@ try {
             </tr>
         </thead>
         <tbody>';
-    
+
     $rank = 1;
     foreach ($top_applicants as $applicant) {
         $html .= '
@@ -386,7 +393,7 @@ try {
                 <td align="right" class="highlight"><b>' . $applicant['total_apps'] . '</b></td>
             </tr>';
     }
-    
+
     $html .= '
         </tbody>
     </table>
@@ -420,10 +427,10 @@ try {
 
     // Set font
     $pdf->SetFont('helvetica', '', 10);
-    
+
     // Set image scale factor
     $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-    
+
     // Set JPEG quality for better image rendering
     $pdf->setJPEGQuality(90);
 
