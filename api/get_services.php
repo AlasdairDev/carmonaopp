@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../config.php';
-// Remove the functions.php require and authentication check
 
 header('Content-Type: application/json');
 
