@@ -77,7 +77,6 @@ $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 
 // Get user statistics
-// Get user statistics
 if (isDepartmentAdmin()) {
     $dept_id = $_SESSION['department_id'];
 
@@ -110,7 +109,6 @@ if (isDepartmentAdmin()) {
     ];
 }
 
-// Get recent activity
 // Get recent activity
 if (isDepartmentAdmin()) {
     $dept_id = $_SESSION['department_id'];
@@ -237,7 +235,7 @@ include '../includes/header.php';
                         </h2>
                     </div>
 
-                    <!-- ✅ FIXED: Added id and onsubmit handler -->
+                    <!-- id and onsubmit handler -->
                     <form method="POST" action="" id="profileForm" onsubmit="return handleProfileSubmit(event);">
                         <div class="info-display">
                             <div class="info-item">
@@ -305,7 +303,7 @@ include '../includes/header.php';
                         </h2>
                     </div>
 
-                    <!-- ✅ FIXED: Added id and onsubmit handler -->
+                    <!-- id and onsubmit handler -->
                     <form method="POST" action="" id="passwordForm" onsubmit="return handlePasswordSubmit(event);">
                         <div class="form-group">
                             <label>Current Password *</label>
@@ -419,7 +417,7 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <!-- ✅ FIXED: Added inline form submission handlers -->
+    <!-- inline form submission handlers -->
     <script>
         function showError(fieldId, message) {
             const field = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId}"]`);
@@ -692,7 +690,7 @@ include '../includes/header.php';
             return true;
         }
 
-        // Show toast notifications on page load
+        // Show notifications on page load
         document.addEventListener('DOMContentLoaded', function () {
             <?php if ($success_message): ?>
                 showToast('<?php echo addslashes($success_message); ?>', 'success');
@@ -707,12 +705,12 @@ include '../includes/header.php';
             const icon = button.querySelector('i');
 
             if (field.type === 'password') {
-                // Show password - use open eye
+                // Show password
                 field.type = 'text';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             } else {
-                // Hide password - use closed eye
+                // Hide password
                 field.type = 'password';
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
