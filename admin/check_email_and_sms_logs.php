@@ -289,7 +289,7 @@ include '../includes/header.php';
                     $where = ["1=1"];
                     $params = [];
 
-                    // ADD DEPARTMENT FILTERING HERE
+                    // DEPARTMENT FILTERING
                     if (isDepartmentAdmin()) {
                         $dept_id = $_SESSION['department_id'];
                         $where[] = "department_id = ?";
@@ -350,7 +350,7 @@ include '../includes/header.php';
                             // Rebuild params for the data query (must match the count query)
                             $params = [];
 
-                            // ADD DEPARTMENT FILTERING (must be first to match count query)
+                            // DEPARTMENT FILTERING
                             if (isDepartmentAdmin()) {
                                 $dept_id = $_SESSION['department_id'];
                                 $params[] = $dept_id;
@@ -400,7 +400,7 @@ include '../includes/header.php';
                                     echo '<th>Error</th>';
                                 }
 
-                                echo '<th style="text-align: center;">Details</th>'; // ADD THIS LINE
+                                echo '<th style="text-align: center;">Details</th>'; 
                 
                                 echo '</tr></thead>';
                                 echo '<tbody>';
@@ -636,7 +636,6 @@ include '../includes/header.php';
                 $log_type = isset($_GET['log_type']) ? $_GET['log_type'] : 'both';
 
                 // Clear Email Logs
-                // Clear Email Logs
                 if (($log_type === 'both' || $log_type === 'email') && $email_table_exists) {
                     if (isDepartmentAdmin()) {
                         $dept_id = $_SESSION['department_id'];
@@ -745,7 +744,7 @@ include '../includes/header.php';
             const dateTo = formData.get('date_to');
             const type = formData.get('type');
             const status = formData.get('status');
-            const user = formData.get('user'); // ADD THIS
+            const user = formData.get('user'); 
             // Validate dates
             if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
                 showFeedbackModal(
